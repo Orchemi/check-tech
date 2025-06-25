@@ -1,10 +1,9 @@
 import { cn } from '@/lib/utils';
-import { Globe } from '@/components/magicui/globe';
 
 export default function Home() {
   return (
-    <div className={cn('flex h-screen flex-col items-center justify-center')}>
-      <Globe />
-    </div>
+    <div
+      className={cn('flex h-screen flex-col items-center justify-center')}
+    ></div>
   );
 }
