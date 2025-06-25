@@ -71,7 +71,11 @@ export default function GlobePage() {
         )}
       </div>
       <div className="relative h-full w-full flex-1">
-        <Globe category={selectedCategory} autoRotateSpeed={autoRotateSpeed} />
+        <Globe
+          initialPhi={2.3}
+          category={selectedCategory}
+          autoRotateSpeed={autoRotateSpeed}
+        />
       </div>
     </div>
   );
