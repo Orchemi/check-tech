@@ -9,9 +9,10 @@ const video2 =
 const image1 =
   'https://exem-homepage-static.s3.ap-northeast-2.amazonaws.com/sample.png';
 
-const page = () => {
+const Page = () => {
   const [src, setSrc] = useState(video2);
 
+  const [mediaType, setMediaType] = useState<'video' | 'image'>('video');
   const [resolution, setResolution] = useState(96);
   const [fontSize, setFontSize] = useState(8);
   const [charInterval, setCharInterval] = useState(100);
@@ -29,6 +30,35 @@ const page = () => {
         placeholder="이미지 또는 동영상 URL"
         className="w-96 rounded border px-2 py-1"
       />
+      <div className="flex gap-2">
+        <button
+          className={`rounded px-2 py-1 ${src === video1 ? 'bg-blue-500' : 'bg-gray-500'}`}
+          onClick={() => {
+            setSrc(video1);
+            setMediaType('video');
+          }}
+        >
+          video1
+        </button>
+        <button
+          className={`rounded px-2 py-1 ${src === video2 ? 'bg-blue-500' : 'bg-gray-500'}`}
+          onClick={() => {
+            setSrc(video2);
+            setMediaType('video');
+          }}
+        >
+          video2
+        </button>
+        <button
+          className={`rounded px-2 py-1 ${src === image1 ? 'bg-blue-500' : 'bg-gray-500'}`}
+          onClick={() => {
+            setSrc(image1);
+            setMediaType('image');
+          }}
+        >
+          image1
+        </button>
+      </div>
       <div className="mb-4 flex flex-col items-center gap-2">
         <div className="flex items-center gap-2">
           <label htmlFor="resolution-slider">Resolution:</label>
@@ -94,7 +124,7 @@ const page = () => {
 
       <AsciiMedia
         src={src}
-        mediaType={'video'}
+        mediaType={mediaType}
         resolution={resolution}
         fontSize={fontSize}
         charInterval={charInterval}
@@ -105,4 +135,4 @@ const page = () => {
   );
 };
 
-export default page;
+export default Page;
