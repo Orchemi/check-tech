@@ -53,7 +53,78 @@ export default function AsciiMedia({
   resolution = 96,
   fontSize = 8,
   charInterval = 100,
-  chars = DEFAULT_CHARS,
+  chars = [
+    ' ',
+    '.',
+    "'",
+    '`',
+    '^',
+    '"',
+    ',',
+    ':',
+    ';',
+    '!',
+    'i',
+    'l',
+    'I',
+    '>',
+    '<',
+    '~',
+    '+',
+    '_',
+    '-',
+    '?',
+    ']',
+    '[',
+    '}',
+    '{',
+    '1',
+    ')',
+    '(',
+    '|',
+    '\\',
+    '/',
+    't',
+    'f',
+    'j',
+    'r',
+    'x',
+    'n',
+    'u',
+    'v',
+    'c',
+    'z',
+    'X',
+    'Y',
+    'U',
+    'J',
+    'C',
+    'L',
+    'Q',
+    '0',
+    'O',
+    'Z',
+    'm',
+    'w',
+    'q',
+    'p',
+    'd',
+    'b',
+    'k',
+    'h',
+    'a',
+    'o',
+    '*',
+    '#',
+    'M',
+    'W',
+    '&',
+    '8',
+    '%',
+    'B',
+    '@',
+    '$',
+  ],
   colored = true,
 }: AsciiMediaProps) {
   const imgRef = useRef<HTMLImageElement | null>(null);
@@ -118,12 +189,16 @@ export default function AsciiMedia({
         for (let x = 0; x < w; x++, i++) {
           const idx = (x + y * w) * 4;
           const [r, g, b] = data.slice(idx, idx + 3);
-          const char = chars[Math.floor(Math.random() * chars.length)];
+          const brightness = Math.round(0.299 * r + 0.587 * g + 0.114 * b);
+          const brightnessNorm = brightness / 255;
+          const charIndex = Math.floor(
+            (1 - brightnessNorm) * (chars.length - 1),
+          );
+          const char = chars[charIndex];
           if (colored) {
             ctx.fillStyle = `rgb(${r},${g},${b})`;
           } else {
-            const gray = Math.round(0.299 * r + 0.587 * g + 0.114 * b);
-            ctx.fillStyle = `rgb(${gray},${gray},${gray})`;
+            ctx.fillStyle = `rgb(${brightness},${brightness},${brightness})`;
           }
           ctx.fillText(char ?? ' ', x * fontSize, y * fontSize);
         }
