@@ -16,6 +16,9 @@ const page = () => {
   const [fontSize, setFontSize] = useState(8);
   const [charInterval, setCharInterval] = useState(100);
   const [colored, setColored] = useState(true);
+  const [charsRandomLevel, setCharsRandomLevel] = useState<
+    'none' | 'group' | 'all'
+  >('none');
 
   return (
     <div className="flex flex-col items-center gap-4 py-4">
@@ -74,6 +77,21 @@ const page = () => {
         />
         <span>{colored ? 'Yes' : 'No'}</span>
       </div>
+      <div className="flex items-center gap-2">
+        <label htmlFor="chars-random-level-checkbox">Chars random level:</label>
+        <select
+          id="chars-random-level-select"
+          value={charsRandomLevel}
+          onChange={(e) =>
+            setCharsRandomLevel(e.target.value as 'none' | 'group' | 'all')
+          }
+        >
+          <option value="none">None</option>
+          <option value="group">Group</option>
+          <option value="all">All</option>
+        </select>
+      </div>
+
       <AsciiMedia
         src={src}
         mediaType={'video'}
@@ -81,6 +99,7 @@ const page = () => {
         fontSize={fontSize}
         charInterval={charInterval}
         colored={colored}
+        charsRandomLevel={charsRandomLevel}
       />
     </div>
   );

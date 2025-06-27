@@ -1,99 +1,117 @@
 import { useEffect, useRef } from 'react';
 
-const DEFAULT_CHARS = [
-  '_',
-  '.',
-  ',',
-  '-',
-  '=',
-  '+',
-  ':',
-  ';',
-  'c',
-  'b',
-  'a',
-  '!',
-  '?',
-  '0',
-  '1',
-  '2',
-  '3',
-  '4',
-  '5',
-  '6',
-  '7',
-  '8',
-  '9',
-  '✚',
-  '⚛︎',
-  '☺︎',
-  '☹︎',
-  '☀︎',
-  '@',
-  '#',
-  'X',
-  'Y',
-  'Z',
-  "'",
-];
-
 interface AsciiMediaProps {
   src: string;
   mediaType: 'image' | 'video';
   resolution?: number;
   fontSize?: number;
   charInterval?: number;
-  chars?: string[];
   colored?: boolean;
+  charsRandomLevel?: 'none' | 'group' | 'all';
+  charList?: string[];
+  charMatrix?: string[][];
 }
 
-export default function AsciiMedia({
-  src,
-  mediaType,
-  resolution = 96,
-  fontSize = 8,
-  charInterval = 100,
-  chars = [
-    ' ',
-    '.',
-    "'",
-    '`',
-    '^',
-    '"',
-    ',',
-    ':',
-    ';',
-    '!',
+const _charList: string[] = [
+  ' ',
+  '.',
+  "'",
+  '`',
+  '^',
+  '"',
+  ',',
+  ':',
+  ';',
+  '!',
+  'i',
+  'l',
+  'I',
+  '>',
+  '<',
+  '~',
+  '+',
+  '_',
+  '-',
+  '?',
+  ']',
+  '[',
+  '}',
+  '{',
+  '1',
+  ')',
+  '(',
+  '|',
+  '\\',
+  '/',
+  't',
+  'f',
+  'j',
+  'r',
+  'x',
+  'n',
+  'u',
+  'v',
+  'c',
+  'z',
+  'X',
+  'Y',
+  'U',
+  'J',
+  'C',
+  'L',
+  'Q',
+  '0',
+  'O',
+  'Z',
+  'm',
+  'w',
+  'q',
+  'p',
+  'd',
+  'b',
+  'k',
+  'h',
+  'a',
+  'o',
+  '*',
+  '#',
+  'M',
+  'W',
+  '&',
+  '8',
+  '%',
+  'B',
+  '@',
+  '$',
+];
+
+const _charMatrix: string[][] = [
+  [' '],
+  ['.', ',', "'", '`', '"', ':', ';', '-', '_', '`', '·', '˙', 'ˑ', ':', '˘'],
+  ['^', ':', ';', '!', '|', '/', '\\', '(', ')', '[', ']', '{', '}', '<', '>'],
+  [
+    '-',
+    '_',
+    '+',
+    '~',
+    '=',
+    '*',
+    '?',
     'i',
     'l',
     'I',
-    '>',
-    '<',
-    '~',
-    '+',
-    '_',
-    '-',
-    '?',
-    ']',
-    '[',
-    '}',
-    '{',
-    '1',
-    ')',
-    '(',
-    '|',
-    '\\',
-    '/',
-    't',
-    'f',
     'j',
     'r',
+    't',
+    'f',
     'x',
     'n',
     'u',
     'v',
     'c',
     'z',
+  ],
+  [
     'X',
     'Y',
     'U',
@@ -114,6 +132,16 @@ export default function AsciiMedia({
     'h',
     'a',
     'o',
+    'S',
+    'V',
+    'A',
+    'E',
+    'F',
+    'T',
+    'P',
+    'G',
+  ],
+  [
     '*',
     '#',
     'M',
@@ -122,11 +150,46 @@ export default function AsciiMedia({
     '8',
     '%',
     'B',
-    '@',
     '$',
+    '@',
+    '§',
+    '¤',
+    '£',
+    '¥',
+    '©',
+    '®',
+    '¶',
+    'µ',
+    'ß',
+    'Ø',
+    'Þ',
+    'Ð',
+    'þ',
+    'æ',
+    'œ',
+    'Ω',
+    'δ',
+    'Φ',
+    'Ψ',
+    'Σ',
+    'Ξ',
   ],
-  colored = true,
-}: AsciiMediaProps) {
+  ['@', '$', '#'],
+];
+
+export default function AsciiMedia(props: AsciiMediaProps) {
+  const {
+    src,
+    mediaType,
+    resolution = 96,
+    fontSize = 8,
+    charInterval = 100,
+    colored = true,
+    charsRandomLevel = 'none',
+    charList = _charList,
+    charMatrix = _charMatrix,
+  } = props;
+
   const imgRef = useRef<HTMLImageElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -191,10 +254,21 @@ export default function AsciiMedia({
           const [r, g, b] = data.slice(idx, idx + 3);
           const brightness = Math.round(0.299 * r + 0.587 * g + 0.114 * b);
           const brightnessNorm = brightness / 255;
-          const charIndex = Math.floor(
-            (1 - brightnessNorm) * (chars.length - 1),
-          );
-          const char = chars[charIndex];
+          let char = ' ';
+          if (charsRandomLevel === 'none') {
+            const charIndex = Math.floor(
+              (1 - brightnessNorm) * (charList.length - 1),
+            );
+            char = charList[charIndex];
+          } else if (charsRandomLevel === 'group') {
+            const groupIndex = Math.floor(
+              (1 - brightnessNorm) * (charMatrix.length - 1),
+            );
+            const group = charMatrix[groupIndex];
+            char = group[Math.floor(Math.random() * group.length)];
+          } else {
+            char = charList[Math.floor(Math.random() * charList.length)];
+          }
           if (colored) {
             ctx.fillStyle = `rgb(${r},${g},${b})`;
           } else {
@@ -232,7 +306,7 @@ export default function AsciiMedia({
     return () => {
       clearTimeout(animationId);
     };
-  }, [src, mediaType, resolution, fontSize, charInterval, colored]);
+  }, [...Object.values(props)]);
 
   if (src === '') return null;
 
