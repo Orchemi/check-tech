@@ -44,6 +44,7 @@ interface AsciiMediaProps {
   fontSize?: number;
   charInterval?: number;
   chars?: string[];
+  colored?: boolean;
 }
 
 export default function AsciiMedia({
@@ -53,6 +54,7 @@ export default function AsciiMedia({
   fontSize = 8,
   charInterval = 100,
   chars = DEFAULT_CHARS,
+  colored = true,
 }: AsciiMediaProps) {
   const imgRef = useRef<HTMLImageElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -117,7 +119,12 @@ export default function AsciiMedia({
           const idx = (x + y * w) * 4;
           const [r, g, b] = data.slice(idx, idx + 3);
           const char = chars[Math.floor(Math.random() * chars.length)];
-          ctx.fillStyle = `rgb(${r},${g},${b})`;
+          if (colored) {
+            ctx.fillStyle = `rgb(${r},${g},${b})`;
+          } else {
+            const gray = Math.round(0.299 * r + 0.587 * g + 0.114 * b);
+            ctx.fillStyle = `rgb(${gray},${gray},${gray})`;
+          }
           ctx.fillText(char ?? ' ', x * fontSize, y * fontSize);
         }
       }
@@ -150,7 +157,7 @@ export default function AsciiMedia({
     return () => {
       clearTimeout(animationId);
     };
-  }, [src, mediaType, resolution, fontSize, charInterval]);
+  }, [src, mediaType, resolution, fontSize, charInterval, colored]);
 
   if (src === '') return null;
 

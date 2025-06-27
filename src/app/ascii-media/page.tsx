@@ -15,6 +15,7 @@ const page = () => {
   const [resolution, setResolution] = useState(96);
   const [fontSize, setFontSize] = useState(8);
   const [charInterval, setCharInterval] = useState(100);
+  const [colored, setColored] = useState(true);
 
   return (
     <div className="flex flex-col items-center gap-4 py-4">
@@ -63,12 +64,23 @@ const page = () => {
           <span>{charInterval}ms</span>
         </div>
       </div>
+      <div className="flex items-center gap-2">
+        <label htmlFor="colored-checkbox">Colored:</label>
+        <input
+          id="colored-checkbox"
+          type="checkbox"
+          checked={colored}
+          onChange={(e) => setColored(e.target.checked)}
+        />
+        <span>{colored ? 'Yes' : 'No'}</span>
+      </div>
       <AsciiMedia
         src={src}
         mediaType={'video'}
         resolution={resolution}
         fontSize={fontSize}
         charInterval={charInterval}
+        colored={colored}
       />
     </div>
   );
