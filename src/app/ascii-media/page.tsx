@@ -2,6 +2,16 @@
 
 import { AsciiMedia } from 'ascii-react';
 import { useState, useRef } from 'react';
+import {
+  Input,
+  Button,
+  Slider,
+  Label,
+  Separator,
+  Tabs,
+  TabsList,
+  TabsTrigger,
+} from '@/components/ui';
 
 const video1 = 'https://assets.codepen.io/907471/mouse.mp4';
 
@@ -54,158 +64,186 @@ const Page = () => {
   };
 
   return (
-    <div className="flex flex-col items-center gap-4 py-4">
-      <input
-        type="text"
-        value={src}
-        onChange={(e) => setSrc(e.target.value)}
-        placeholder="이미지 또는 동영상 URL"
-        className="w-96 rounded border px-2 py-1"
-      />
-      <div className="flex items-center gap-2">
-        <button
-          className="rounded-md bg-gray-200 px-2 py-1"
-          onClick={() => setMediaType('video')}
-        >
-          <span>Video</span>
-        </button>
-        <button
-          className="rounded-md bg-gray-200 px-2 py-1"
-          onClick={() => setMediaType('image')}
-        >
-          <span>Image</span>
-        </button>
-      </div>
-      <div className="mb-4 flex flex-col items-center gap-2">
-        <div className="flex items-center gap-2">
-          <label htmlFor="resolution-slider">Resolution:</label>
-          <input
-            id="resolution-slider"
-            type="range"
-            min={24}
-            max={192}
-            value={resolution}
-            onChange={(e) => setResolution(Number(e.target.value))}
+    <div className="relative flex min-h-screen">
+      {/* 메인 영역: AsciiMedia 중앙 정렬 */}
+      <div className="flex flex-1 items-center justify-center">
+        <div style={{ backgroundColor }}>
+          <AsciiMedia
+            src={src}
+            mediaType={mediaType}
+            resolution={resolution}
+            fontSize={fontSize}
+            charInterval={charInterval}
+            color={color}
+            charsRandomLevel={charsRandomLevel}
           />
-          <span>{resolution}px</span>
         </div>
-        <div className="flex items-center gap-2">
-          <label htmlFor="font-size-slider">Font size:</label>
-          <input
-            id="font-size-slider"
-            type="range"
-            min={4}
-            max={24}
-            value={fontSize}
-            onChange={(e) => setFontSize(Number(e.target.value))}
-          />
-          <span>{fontSize}px</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <label htmlFor="interval-slider">Interval(ms):</label>
-          <input
-            id="interval-slider"
-            type="range"
-            min={16}
-            max={500}
-            value={charInterval}
-            onChange={(e) => setCharInterval(Number(e.target.value))}
-          />
-          <span>{charInterval}ms</span>
-        </div>
+        <canvas style={{ display: 'none' }} />
       </div>
-      <div className="flex items-center gap-2">
-        <button
-          className="rounded-md bg-gray-200 px-2 py-1"
-          onClick={() => setColor('auto')}
-        >
-          <span>Auto</span>
-        </button>
-        <button
-          className="rounded-md bg-gray-200 px-2 py-1"
-          onClick={() => setColor('mono')}
-        >
-          <span>Mono</span>
-        </button>
-        <button
-          className="rounded-md bg-gray-200 px-2 py-1"
-          onClick={() => setColor('#000000')}
-        >
-          <span>#000000</span>
-        </button>
-        <button
-          className="rounded-md bg-gray-200 px-2 py-1"
-          onClick={() => setColor('#ffffff')}
-        >
-          <span>#ffffff</span>
-        </button>
-        <button
-          className="rounded-md bg-gray-200 px-2 py-1"
-          onClick={() => setColor('#ff00ff')}
-        >
-          <span>#ff00ff</span>
-        </button>
-        <input
-          type="text"
-          className="rounded-md border border-gray-300 px-2 py-1"
-          value={color.startsWith('#') ? color : '#'}
-          onChange={(e) => {
-            const value = e.target.value;
-            if (value.startsWith('#')) {
-              setColor(value as `#${string}`);
-            }
-          }}
-        />
-      </div>
-      <div className="flex items-center gap-2">
-        <label htmlFor="chars-random-level-checkbox">Chars random level:</label>
-        <select
-          id="chars-random-level-select"
-          value={charsRandomLevel}
-          onChange={(e) =>
-            setCharsRandomLevel(e.target.value as 'none' | 'group' | 'all')
-          }
-        >
-          <option value="none">None</option>
-          <option value="group">Group</option>
-          <option value="all">All</option>
-        </select>
-      </div>
-      <div className="flex items-center gap-2">
-        <label htmlFor="background-color-picker">배경색:</label>
-        <input
-          id="background-color-picker"
-          type="color"
-          value={backgroundColor}
-          onChange={(e) => setBackgroundColor(e.target.value)}
-        />
-        <input
-          type="text"
-          className="w-24 rounded-md border border-gray-300 px-2 py-1"
-          value={backgroundColor}
-          onChange={(e) => setBackgroundColor(e.target.value)}
-          maxLength={7}
-        />
-      </div>
-      <button
-        className="rounded-md bg-blue-500 px-4 py-2 text-white"
-        onClick={handleRecord}
-        disabled={isRecording}
-      >
-        {isRecording ? '녹화 중...' : '녹화 시작'}
-      </button>
 
-      <div style={{ backgroundColor }}>
-        <AsciiMedia
-          src={src}
-          mediaType={mediaType}
-          resolution={resolution}
-          fontSize={fontSize}
-          charInterval={charInterval}
-          color={color}
-          charsRandomLevel={charsRandomLevel}
-        />
-      </div>
+      {/* 오른쪽 사이드바 (설정 패널) 항상 표시 */}
+      <div className="w-[360px]" />
+
+      <aside className="fixed top-0 right-0 z-20 flex h-full w-[360px] flex-col border-l bg-white shadow-lg">
+        <div className="border-b px-6 py-6 text-lg font-bold">
+          Ascii Media 설정
+        </div>
+        <div className="flex-1 overflow-y-auto px-6 py-4">
+          <div className="space-y-2">
+            <Label htmlFor="media-url">미디어 URL</Label>
+            <Input
+              id="media-url"
+              value={src}
+              onChange={(e) => setSrc(e.target.value)}
+              placeholder="이미지 또는 동영상 URL"
+            />
+          </div>
+          <Separator className="my-4" />
+
+          <div className="space-y-2">
+            <Label>타입</Label>
+            <Tabs
+              value={mediaType}
+              onValueChange={(v) => setMediaType(v as typeof mediaType)}
+              className="w-full"
+            >
+              <TabsList className="flex w-full justify-between">
+                <TabsTrigger value="video" className="flex-1">
+                  Video
+                </TabsTrigger>
+                <TabsTrigger value="image" className="flex-1">
+                  Image
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+          <Separator className="my-4" />
+
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="resolution-slider" className="mb-2 block">
+                해상도: {resolution}px
+              </Label>
+              <Slider
+                id="resolution-slider"
+                min={24}
+                max={192}
+                value={[resolution]}
+                onValueChange={([v]) => setResolution(v)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="font-size-slider" className="mb-2 block">
+                폰트 크기: {fontSize}px
+              </Label>
+              <Slider
+                id="font-size-slider"
+                min={4}
+                max={24}
+                value={[fontSize]}
+                onValueChange={([v]) => setFontSize(v)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="interval-slider" className="mb-2 block">
+                간격: {charInterval}ms
+              </Label>
+              <Slider
+                id="interval-slider"
+                min={16}
+                max={500}
+                value={[charInterval]}
+                onValueChange={([v]) => setCharInterval(v)}
+              />
+            </div>
+          </div>
+          <Separator className="my-4" />
+
+          <div className="space-y-2">
+            <Label>색상</Label>
+            <div className="flex items-center gap-2">
+              <Button
+                variant={color === 'auto' ? 'default' : 'outline'}
+                onClick={() => setColor('auto')}
+              >
+                Auto
+              </Button>
+              <Button
+                variant={color === 'mono' ? 'default' : 'outline'}
+                onClick={() => setColor('mono')}
+              >
+                Mono
+              </Button>
+              <Input
+                type="color"
+                value={color.startsWith('#') ? color : '#000000'}
+                onChange={(e) => setColor(e.target.value as `#${string}`)}
+                className="h-10 w-10 border-none p-0"
+              />
+              <Input
+                type="text"
+                value={color}
+                onChange={(e) => setColor(e.target.value as `#${string}`)}
+                className="w-24"
+              />
+            </div>
+          </div>
+          <Separator className="my-4" />
+
+          <div className="space-y-2">
+            <Label>문자 랜덤 레벨</Label>
+            <Tabs
+              value={charsRandomLevel}
+              onValueChange={(v) =>
+                setCharsRandomLevel(v as typeof charsRandomLevel)
+              }
+              className="w-full"
+            >
+              <TabsList className="flex w-full justify-between">
+                <TabsTrigger value="none" className="flex-1">
+                  none
+                </TabsTrigger>
+                <TabsTrigger value="group" className="flex-1">
+                  group
+                </TabsTrigger>
+                <TabsTrigger value="all" className="flex-1">
+                  all
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+          <Separator className="my-4" />
+
+          <div className="space-y-2">
+            <Label htmlFor="background-color-picker">배경색</Label>
+            <div className="flex items-center gap-2">
+              <Input
+                id="background-color-picker"
+                type="color"
+                value={backgroundColor}
+                onChange={(e) => setBackgroundColor(e.target.value)}
+                className="h-10 w-10 border-none p-0"
+              />
+              <Input
+                type="text"
+                value={backgroundColor}
+                onChange={(e) => setBackgroundColor(e.target.value)}
+                className="w-24"
+                maxLength={7}
+              />
+            </div>
+          </div>
+          <Separator className="my-4" />
+
+          <Button
+            className="w-full"
+            onClick={handleRecord}
+            disabled={isRecording}
+          >
+            {isRecording ? '녹화 중...' : '녹화 시작'}
+          </Button>
+        </div>
+      </aside>
     </div>
   );
 };
