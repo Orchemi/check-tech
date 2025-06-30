@@ -18,6 +18,7 @@ const Page = () => {
   >('none');
   const [isRecording, setIsRecording] = useState(false);
   const recorderRef = useRef<MediaRecorder | null>(null);
+  const [backgroundColor, setBackgroundColor] = useState('#ffffff');
 
   const handleRecord = () => {
     const canvas = document.querySelector('canvas');
@@ -170,7 +171,22 @@ const Page = () => {
           <option value="all">All</option>
         </select>
       </div>
-
+      <div className="flex items-center gap-2">
+        <label htmlFor="background-color-picker">배경색:</label>
+        <input
+          id="background-color-picker"
+          type="color"
+          value={backgroundColor}
+          onChange={(e) => setBackgroundColor(e.target.value)}
+        />
+        <input
+          type="text"
+          className="w-24 rounded-md border border-gray-300 px-2 py-1"
+          value={backgroundColor}
+          onChange={(e) => setBackgroundColor(e.target.value)}
+          maxLength={7}
+        />
+      </div>
       <button
         className="rounded-md bg-blue-500 px-4 py-2 text-white"
         onClick={handleRecord}
@@ -179,15 +195,17 @@ const Page = () => {
         {isRecording ? '녹화 중...' : '녹화 시작'}
       </button>
 
-      <AsciiMedia
-        src={src}
-        mediaType={mediaType}
-        resolution={resolution}
-        fontSize={fontSize}
-        charInterval={charInterval}
-        color={color}
-        charsRandomLevel={charsRandomLevel}
-      />
+      <div style={{ backgroundColor }}>
+        <AsciiMedia
+          src={src}
+          mediaType={mediaType}
+          resolution={resolution}
+          fontSize={fontSize}
+          charInterval={charInterval}
+          color={color}
+          charsRandomLevel={charsRandomLevel}
+        />
+      </div>
     </div>
   );
 };
