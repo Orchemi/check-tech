@@ -22,6 +22,8 @@ const EmblaCarousel = () => {
   useEffect(() => {
     if (!emblaApi) return;
 
+    emblaApi.on('init', () => updateVisible('init'));
+    emblaApi.on('init', () => updateVisible('init'));
     emblaApi.on('settle', () => updateVisible('settle'));
     emblaApi.on('select', () => updateVisible('select'));
     emblaApi.on('scroll', () => updateVisible('scroll'));
@@ -31,8 +33,8 @@ const EmblaCarousel = () => {
     (index: number) => {
       if (visibleIndexes.length === 0) return false;
       return (
-        index === visibleIndexes[0] ||
-        index === visibleIndexes[visibleIndexes.length - 1]
+        index === visibleIndexes[0]
+        // index === visibleIndexes[visibleIndexes.length - 1]
       );
     },
     [visibleIndexes],
@@ -42,14 +44,14 @@ const EmblaCarousel = () => {
   const scrollNext = () => emblaApi?.scrollNext();
 
   return (
-    <>
+    <div>
       <div className="overflow-hidden" ref={emblaRef}>
         <div className="flex touch-pan-x">
-          {slides.map((emoji, index) => (
+          {[...slides, ...slides].map((emoji, index) => (
             <div
               key={index}
-              className={`mx-2 flex h-40 flex-[0_0_30%] items-center justify-center rounded-xl text-6xl transition-opacity duration-300 ${
-                isEdgeItem(index) ? 'opacity-50' : 'opacity-100'
+              className={`mx-2 flex h-40 flex-[0_0_20%] items-center justify-center rounded-xl text-6xl transition-opacity duration-200 ${
+                isEdgeItem(index) ? 'opacity-20' : 'opacity-100'
               } bg-pink-100`}
             >
               {emoji}
@@ -72,7 +74,7 @@ const EmblaCarousel = () => {
           Next
         </button>
       </div>
-    </>
+    </div>
   );
 };
 
