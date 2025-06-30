@@ -6,22 +6,26 @@ import useEmblaCarousel from 'embla-carousel-react';
 const slides = ['🍎', '🍊', '🍌', '🍇', '🍉', '🍍'];
 
 export default function CarouselPage() {
-  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true });
+  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: false });
   const [visibleIndexes, setVisibleIndexes] = useState<number[]>([]);
 
-  const updateVisible = useCallback(() => {
-    if (!emblaApi) return;
-    const inView = emblaApi.slidesInView();
-    console.log(inView);
-    setVisibleIndexes(inView);
-  }, [emblaApi]);
+  const updateVisible = useCallback(
+    (trigger: string) => {
+      if (!emblaApi) return;
+      console.log(trigger);
+      const inView = emblaApi.slidesInView();
+      setVisibleIndexes(inView);
+    },
+    [emblaApi],
+  );
 
   useEffect(() => {
     if (!emblaApi) return;
-    emblaApi.on('select', updateVisible);
-    emblaApi.on('init', updateVisible);
-    emblaApi.on('reInit', updateVisible);
-  }, [emblaApi, updateVisible]);
+
+    emblaApi.on('settle', () => updateVisible('settle'));
+    emblaApi.on('select', () => updateVisible('select'));
+    emblaApi.on('scroll', () => updateVisible('scroll'));
+  }, [emblaApi]);
 
   const isEdgeItem = useCallback(
     (index: number) => {
@@ -46,7 +50,7 @@ export default function CarouselPage() {
           {slides.map((emoji, index) => (
             <div
               key={index}
-              className={`mx-2 flex h-40 flex-[0_0_60%] items-center justify-center rounded-xl text-6xl transition-opacity duration-300 ${
+              className={`mx-2 flex h-40 flex-[0_0_30%] items-center justify-center rounded-xl text-6xl transition-opacity duration-300 ${
                 isEdgeItem(index) ? 'opacity-50' : 'opacity-100'
               } bg-pink-100`}
             >
