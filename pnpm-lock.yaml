@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      ascii-react:
+        specifier: ^0.0.2
+        version: 0.0.2
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -707,6 +710,9 @@ packages:
   arraybuffer.prototype.slice@1.0.4:
     resolution: {integrity: sha512-BNoCY6SXXPQ7gF2opIP4GBE+Xw7U+pHMYKuzjgCN3GwiaIR09UUeKfheyIry77QtrCBlC0KK0q5/TER/tYh3PQ==}
     engines: {node: '>= 0.4'}
+
+  ascii-react@0.0.2:
+    resolution: {integrity: sha512-d1j/Z3APepFP+x0oeesws18ejrZTePsKtWBOVYLab6GKNXYCy+IpuMJR0RHhnLRKTEzAeBxFKfKZ/HtiljNa9Q==}
 
   ast-types-flow@0.0.8:
     resolution: {integrity: sha512-OH/2E5Fg20h2aPrbe+QL8JZQFko0YZaF+j4mnQ7BGhfavO7OpSLa8a0y9sBwomHdSbkhTS8TQNayBfnW5DwbvQ==}
@@ -2580,6 +2586,11 @@ snapshots:
       es-errors: 1.3.0
       get-intrinsic: 1.3.0
       is-array-buffer: 3.0.5
+
+  ascii-react@0.0.2:
+    dependencies:
+      react: 19.1.0
+      react-dom: 19.1.0(react@19.1.0)
 
   ast-types-flow@0.0.8: {}
 

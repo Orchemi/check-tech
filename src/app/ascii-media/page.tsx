@@ -1,22 +1,18 @@
 'use client';
 
-import AsciiMedia from '@/components/AsciiMedia';
+import { AsciiMedia } from 'ascii-react';
 import { useState } from 'react';
 
 const video1 = 'https://assets.codepen.io/907471/mouse.mp4';
-const video2 =
-  'https://exem-homepage-static.s3.ap-northeast-2.amazonaws.com/swedish-flag-short.mp4';
-const image1 =
-  'https://exem-homepage-static.s3.ap-northeast-2.amazonaws.com/sample.png';
 
 const Page = () => {
-  const [src, setSrc] = useState(video2);
+  const [src, setSrc] = useState(video1);
 
   const [mediaType, setMediaType] = useState<'video' | 'image'>('video');
   const [resolution, setResolution] = useState(96);
   const [fontSize, setFontSize] = useState(8);
   const [charInterval, setCharInterval] = useState(100);
-  const [colored, setColored] = useState(true);
+  const [color, setColor] = useState<'auto' | 'mono' | `#${string}`>('auto');
   const [charsRandomLevel, setCharsRandomLevel] = useState<
     'none' | 'group' | 'all'
   >('none');
@@ -30,33 +26,18 @@ const Page = () => {
         placeholder="이미지 또는 동영상 URL"
         className="w-96 rounded border px-2 py-1"
       />
-      <div className="flex gap-2">
+      <div className="flex items-center gap-2">
         <button
-          className={`rounded px-2 py-1 ${src === video1 ? 'bg-blue-500' : 'bg-gray-500'}`}
-          onClick={() => {
-            setSrc(video1);
-            setMediaType('video');
-          }}
+          className="rounded-md bg-gray-200 px-2 py-1"
+          onClick={() => setMediaType('video')}
         >
-          video1
+          <span>Video</span>
         </button>
         <button
-          className={`rounded px-2 py-1 ${src === video2 ? 'bg-blue-500' : 'bg-gray-500'}`}
-          onClick={() => {
-            setSrc(video2);
-            setMediaType('video');
-          }}
+          className="rounded-md bg-gray-200 px-2 py-1"
+          onClick={() => setMediaType('image')}
         >
-          video2
-        </button>
-        <button
-          className={`rounded px-2 py-1 ${src === image1 ? 'bg-blue-500' : 'bg-gray-500'}`}
-          onClick={() => {
-            setSrc(image1);
-            setMediaType('image');
-          }}
-        >
-          image1
+          <span>Image</span>
         </button>
       </div>
       <div className="mb-4 flex flex-col items-center gap-2">
@@ -98,14 +79,47 @@ const Page = () => {
         </div>
       </div>
       <div className="flex items-center gap-2">
-        <label htmlFor="colored-checkbox">Colored:</label>
+        <button
+          className="rounded-md bg-gray-200 px-2 py-1"
+          onClick={() => setColor('auto')}
+        >
+          <span>Auto</span>
+        </button>
+        <button
+          className="rounded-md bg-gray-200 px-2 py-1"
+          onClick={() => setColor('mono')}
+        >
+          <span>Mono</span>
+        </button>
+        <button
+          className="rounded-md bg-gray-200 px-2 py-1"
+          onClick={() => setColor('#000000')}
+        >
+          <span>#000000</span>
+        </button>
+        <button
+          className="rounded-md bg-gray-200 px-2 py-1"
+          onClick={() => setColor('#ffffff')}
+        >
+          <span>#ffffff</span>
+        </button>
+        <button
+          className="rounded-md bg-gray-200 px-2 py-1"
+          onClick={() => setColor('#ff00ff')}
+        >
+          <span>#ff00ff</span>
+        </button>
         <input
-          id="colored-checkbox"
-          type="checkbox"
-          checked={colored}
-          onChange={(e) => setColored(e.target.checked)}
+          type="text"
+          className="rounded-md border border-gray-300 px-2 py-1"
+          value={color.startsWith('#') ? color : '#'}
+          onChange={(e) => {
+            const value = e.target.value;
+            if (value.startsWith('#')) {
+              setColor(value as `#${string}`);
+            }
+          }}
         />
-        <span>{colored ? 'Yes' : 'No'}</span>
       </div>
       <div className="flex items-center gap-2">
         <label htmlFor="chars-random-level-checkbox">Chars random level:</label>
@@ -128,7 +142,7 @@ const Page = () => {
         resolution={resolution}
         fontSize={fontSize}
         charInterval={charInterval}
-        colored={colored}
+        color={color}
         charsRandomLevel={charsRandomLevel}
       />
     </div>
