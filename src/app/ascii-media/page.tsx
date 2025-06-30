@@ -1,136 +1,249 @@
 'use client';
 
-import AsciiMedia from '@/components/AsciiMedia';
-import { useState } from 'react';
+import { AsciiMedia } from 'ascii-react';
+import { useState, useRef } from 'react';
+import {
+  Input,
+  Button,
+  Slider,
+  Label,
+  Separator,
+  Tabs,
+  TabsList,
+  TabsTrigger,
+} from '@/components/ui';
 
 const video1 = 'https://assets.codepen.io/907471/mouse.mp4';
-const video2 =
-  'https://exem-homepage-static.s3.ap-northeast-2.amazonaws.com/swedish-flag-short.mp4';
-const image1 =
-  'https://exem-homepage-static.s3.ap-northeast-2.amazonaws.com/sample.png';
 
 const Page = () => {
-  const [src, setSrc] = useState(video2);
+  const [src, setSrc] = useState(video1);
 
   const [mediaType, setMediaType] = useState<'video' | 'image'>('video');
   const [resolution, setResolution] = useState(96);
   const [fontSize, setFontSize] = useState(8);
   const [charInterval, setCharInterval] = useState(100);
-  const [colored, setColored] = useState(true);
+  const [color, setColor] = useState<'auto' | 'mono' | `#${string}`>('auto');
   const [charsRandomLevel, setCharsRandomLevel] = useState<
     'none' | 'group' | 'all'
   >('none');
+  const [isRecording, setIsRecording] = useState(false);
+  const recorderRef = useRef<MediaRecorder | null>(null);
+  const [backgroundColor, setBackgroundColor] = useState('#ffffff');
+
+  const handleRecord = () => {
+    const canvas = document.querySelector('canvas');
+    if (!canvas) {
+      alert('캔버스를 찾을 수 없습니다.');
+      return;
+    }
+    const stream = (canvas as HTMLCanvasElement).captureStream(30);
+    const recorder = new MediaRecorder(stream, {
+      mimeType: 'video/webm;codecs=vp9',
+      videoBitsPerSecond: 10_000_000,
+    });
+    const chunks: Blob[] = [];
+
+    recorder.ondataavailable = (e) => chunks.push(e.data);
+    recorder.onstop = () => {
+      const blob = new Blob(chunks, { type: 'video/webm' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'ascii-canvas.webm';
+      a.click();
+      setIsRecording(false);
+    };
+
+    recorder.start();
+    setIsRecording(true);
+    recorderRef.current = recorder;
+
+    setTimeout(() => {
+      recorder.stop();
+    }, 3000); // 3초간 녹화
+  };
 
   return (
-    <div className="flex flex-col items-center gap-4 py-4">
-      <input
-        type="text"
-        value={src}
-        onChange={(e) => setSrc(e.target.value)}
-        placeholder="이미지 또는 동영상 URL"
-        className="w-96 rounded border px-2 py-1"
-      />
-      <div className="flex gap-2">
-        <button
-          className={`rounded px-2 py-1 ${src === video1 ? 'bg-blue-500' : 'bg-gray-500'}`}
-          onClick={() => {
-            setSrc(video1);
-            setMediaType('video');
-          }}
-        >
-          video1
-        </button>
-        <button
-          className={`rounded px-2 py-1 ${src === video2 ? 'bg-blue-500' : 'bg-gray-500'}`}
-          onClick={() => {
-            setSrc(video2);
-            setMediaType('video');
-          }}
-        >
-          video2
-        </button>
-        <button
-          className={`rounded px-2 py-1 ${src === image1 ? 'bg-blue-500' : 'bg-gray-500'}`}
-          onClick={() => {
-            setSrc(image1);
-            setMediaType('image');
-          }}
-        >
-          image1
-        </button>
-      </div>
-      <div className="mb-4 flex flex-col items-center gap-2">
-        <div className="flex items-center gap-2">
-          <label htmlFor="resolution-slider">Resolution:</label>
-          <input
-            id="resolution-slider"
-            type="range"
-            min={24}
-            max={192}
-            value={resolution}
-            onChange={(e) => setResolution(Number(e.target.value))}
+    <div className="relative flex min-h-screen">
+      {/* 메인 영역: AsciiMedia 중앙 정렬 */}
+      <div className="flex flex-1 items-center justify-center">
+        <div style={{ backgroundColor }}>
+          <AsciiMedia
+            src={src}
+            mediaType={mediaType}
+            resolution={resolution}
+            fontSize={fontSize}
+            charInterval={charInterval}
+            color={color}
+            charsRandomLevel={charsRandomLevel}
           />
-          <span>{resolution}px</span>
         </div>
-        <div className="flex items-center gap-2">
-          <label htmlFor="font-size-slider">Font size:</label>
-          <input
-            id="font-size-slider"
-            type="range"
-            min={4}
-            max={24}
-            value={fontSize}
-            onChange={(e) => setFontSize(Number(e.target.value))}
-          />
-          <span>{fontSize}px</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <label htmlFor="interval-slider">Interval(ms):</label>
-          <input
-            id="interval-slider"
-            type="range"
-            min={16}
-            max={500}
-            value={charInterval}
-            onChange={(e) => setCharInterval(Number(e.target.value))}
-          />
-          <span>{charInterval}ms</span>
-        </div>
-      </div>
-      <div className="flex items-center gap-2">
-        <label htmlFor="colored-checkbox">Colored:</label>
-        <input
-          id="colored-checkbox"
-          type="checkbox"
-          checked={colored}
-          onChange={(e) => setColored(e.target.checked)}
-        />
-        <span>{colored ? 'Yes' : 'No'}</span>
-      </div>
-      <div className="flex items-center gap-2">
-        <label htmlFor="chars-random-level-checkbox">Chars random level:</label>
-        <select
-          id="chars-random-level-select"
-          value={charsRandomLevel}
-          onChange={(e) =>
-            setCharsRandomLevel(e.target.value as 'none' | 'group' | 'all')
-          }
-        >
-          <option value="none">None</option>
-          <option value="group">Group</option>
-          <option value="all">All</option>
-        </select>
+        <canvas style={{ display: 'none' }} />
       </div>
 
-      <AsciiMedia
-        src={src}
-        mediaType={mediaType}
-        resolution={resolution}
-        fontSize={fontSize}
-        charInterval={charInterval}
-        colored={colored}
-        charsRandomLevel={charsRandomLevel}
-      />
+      {/* 오른쪽 사이드바 (설정 패널) 항상 표시 */}
+      <div className="w-[360px]" />
+
+      <aside className="fixed top-0 right-0 z-20 flex h-full w-[360px] flex-col border-l bg-white shadow-lg">
+        <div className="border-b px-6 py-6 text-lg font-bold">
+          Ascii Media 설정
+        </div>
+        <div className="flex-1 overflow-y-auto px-6 py-4">
+          <div className="space-y-2">
+            <Label htmlFor="media-url">미디어 URL</Label>
+            <Input
+              id="media-url"
+              value={src}
+              onChange={(e) => setSrc(e.target.value)}
+              placeholder="이미지 또는 동영상 URL"
+            />
+          </div>
+          <Separator className="my-4" />
+
+          <div className="space-y-2">
+            <Label>타입</Label>
+            <Tabs
+              value={mediaType}
+              onValueChange={(v) => setMediaType(v as typeof mediaType)}
+              className="w-full"
+            >
+              <TabsList className="flex w-full justify-between">
+                <TabsTrigger value="video" className="flex-1">
+                  Video
+                </TabsTrigger>
+                <TabsTrigger value="image" className="flex-1">
+                  Image
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+          <Separator className="my-4" />
+
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="resolution-slider" className="mb-2 block">
+                해상도: {resolution}px
+              </Label>
+              <Slider
+                id="resolution-slider"
+                min={24}
+                max={192}
+                value={[resolution]}
+                onValueChange={([v]) => setResolution(v)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="font-size-slider" className="mb-2 block">
+                폰트 크기: {fontSize}px
+              </Label>
+              <Slider
+                id="font-size-slider"
+                min={4}
+                max={24}
+                value={[fontSize]}
+                onValueChange={([v]) => setFontSize(v)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="interval-slider" className="mb-2 block">
+                간격: {charInterval}ms
+              </Label>
+              <Slider
+                id="interval-slider"
+                min={16}
+                max={500}
+                value={[charInterval]}
+                onValueChange={([v]) => setCharInterval(v)}
+              />
+            </div>
+          </div>
+          <Separator className="my-4" />
+
+          <div className="space-y-2">
+            <Label>색상</Label>
+            <div className="flex items-center gap-2">
+              <Button
+                variant={color === 'auto' ? 'default' : 'outline'}
+                onClick={() => setColor('auto')}
+              >
+                Auto
+              </Button>
+              <Button
+                variant={color === 'mono' ? 'default' : 'outline'}
+                onClick={() => setColor('mono')}
+              >
+                Mono
+              </Button>
+              <Input
+                type="color"
+                value={color.startsWith('#') ? color : '#000000'}
+                onChange={(e) => setColor(e.target.value as `#${string}`)}
+                className="h-10 w-10 border-none p-0"
+              />
+              <Input
+                type="text"
+                value={color}
+                onChange={(e) => setColor(e.target.value as `#${string}`)}
+                className="w-24"
+              />
+            </div>
+          </div>
+          <Separator className="my-4" />
+
+          <div className="space-y-2">
+            <Label>문자 랜덤 레벨</Label>
+            <Tabs
+              value={charsRandomLevel}
+              onValueChange={(v) =>
+                setCharsRandomLevel(v as typeof charsRandomLevel)
+              }
+              className="w-full"
+            >
+              <TabsList className="flex w-full justify-between">
+                <TabsTrigger value="none" className="flex-1">
+                  none
+                </TabsTrigger>
+                <TabsTrigger value="group" className="flex-1">
+                  group
+                </TabsTrigger>
+                <TabsTrigger value="all" className="flex-1">
+                  all
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+          <Separator className="my-4" />
+
+          <div className="space-y-2">
+            <Label htmlFor="background-color-picker">배경색</Label>
+            <div className="flex items-center gap-2">
+              <Input
+                id="background-color-picker"
+                type="color"
+                value={backgroundColor}
+                onChange={(e) => setBackgroundColor(e.target.value)}
+                className="h-10 w-10 border-none p-0"
+              />
+              <Input
+                type="text"
+                value={backgroundColor}
+                onChange={(e) => setBackgroundColor(e.target.value)}
+                className="w-24"
+                maxLength={7}
+              />
+            </div>
+          </div>
+          <Separator className="my-4" />
+
+          <Button
+            className="w-full"
+            onClick={handleRecord}
+            disabled={isRecording}
+          >
+            {isRecording ? '녹화 중...' : '녹화 시작'}
+          </Button>
+        </div>
+      </aside>
     </div>
   );
 };
