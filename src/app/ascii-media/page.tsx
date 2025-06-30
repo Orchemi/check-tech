@@ -1,7 +1,7 @@
 'use client';
 
 import { AsciiMedia } from 'ascii-react';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 
 const video1 = 'https://assets.codepen.io/907471/mouse.mp4';
 
@@ -16,6 +16,41 @@ const Page = () => {
   const [charsRandomLevel, setCharsRandomLevel] = useState<
     'none' | 'group' | 'all'
   >('none');
+  const [isRecording, setIsRecording] = useState(false);
+  const recorderRef = useRef<MediaRecorder | null>(null);
+
+  const handleRecord = () => {
+    const canvas = document.querySelector('canvas');
+    if (!canvas) {
+      alert('캔버스를 찾을 수 없습니다.');
+      return;
+    }
+    const stream = (canvas as HTMLCanvasElement).captureStream(30);
+    const recorder = new MediaRecorder(stream, {
+      mimeType: 'video/webm;codecs=vp9',
+      videoBitsPerSecond: 10_000_000,
+    });
+    const chunks: Blob[] = [];
+
+    recorder.ondataavailable = (e) => chunks.push(e.data);
+    recorder.onstop = () => {
+      const blob = new Blob(chunks, { type: 'video/webm' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'ascii-canvas.webm';
+      a.click();
+      setIsRecording(false);
+    };
+
+    recorder.start();
+    setIsRecording(true);
+    recorderRef.current = recorder;
+
+    setTimeout(() => {
+      recorder.stop();
+    }, 3000); // 3초간 녹화
+  };
 
   return (
     <div className="flex flex-col items-center gap-4 py-4">
@@ -135,6 +170,14 @@ const Page = () => {
           <option value="all">All</option>
         </select>
       </div>
+
+      <button
+        className="rounded-md bg-blue-500 px-4 py-2 text-white"
+        onClick={handleRecord}
+        disabled={isRecording}
+      >
+        {isRecording ? '녹화 중...' : '녹화 시작'}
+      </button>
 
       <AsciiMedia
         src={src}
