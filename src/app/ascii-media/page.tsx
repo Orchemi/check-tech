@@ -60,8 +60,10 @@ const Page = () => {
 
     setTimeout(() => {
       recorder.stop();
-    }, 3000); // 3초간 녹화
+    }, RECORD_TIME); // 5초간 녹화
   };
+
+  const RECORD_TIME = 5000;
 
   return (
     <div className="relative flex min-h-screen">
