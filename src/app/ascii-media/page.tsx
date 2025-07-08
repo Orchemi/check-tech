@@ -1,6 +1,6 @@
 'use client';
 
-import { AsciiMedia } from 'ascii-react';
+import { AsciiMedia, ManualCharColor } from 'ascii-react';
 import { useState, useRef, useEffect } from 'react';
 import {
   Input,
@@ -17,6 +17,8 @@ import {
   SelectValue,
 } from '@/components/ui';
 import DndFileInput from './components/DndFileInput';
+import { PlusCircle, Trash2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const video1 = 'https://assets.codepen.io/907471/mouse.mp4';
 
@@ -41,6 +43,44 @@ const Page = () => {
   const [quality, setQuality] = useState(10_000_000); // bps, default 10Mbps
   const [ignoreBright, setIgnoreBright] = useState(0); // 0~1
   const [invert, setInvert] = useState(false);
+  const [manualCharColors, setManualCharColors] = useState<ManualCharColor[]>([
+    { char: '', color: '#000000' },
+  ]);
+
+  const handleCharChange = (idx: number, value: string) => {
+    setManualCharColors((arr) =>
+      arr.map((item, i) =>
+        i === idx ? { ...item, char: value.slice(0, 1) } : item,
+      ),
+    );
+  };
+  const handleColorChange = (idx: number, value: string) => {
+    setManualCharColors((arr) =>
+      arr.map((item, i) =>
+        i === idx ? { ...item, color: value as `#${string}` } : item,
+      ),
+    );
+  };
+  const handleAddCharColor = () => {
+    setManualCharColors((arr) => [...arr, { char: '', color: '#000000' }]);
+  };
+  const handleRemoveCharColor = (idx: number) => {
+    setManualCharColors((arr) =>
+      arr.length > 1 ? arr.filter((_, i) => i !== idx) : arr,
+    );
+  };
+
+  // Hex input handler for manualCharColors
+  const handleHexInputChange = (idx: number, value: string) => {
+    // Only allow # and up to 8 hex digits
+    if (/^#[0-9a-fA-F]{0,8}$/.test(value)) {
+      setManualCharColors((arr) =>
+        arr.map((item, i) =>
+          i === idx ? { ...item, color: value as `#${string}` } : item,
+        ),
+      );
+    }
+  };
 
   // Clean up Blob URL on unmount or when new file is selected
   useEffect(() => {
@@ -111,6 +151,7 @@ const Page = () => {
             backgroundColor={backgroundColor}
             ignoreBright={ignoreBright}
             invert={invert}
+            manualCharColors={manualCharColors}
           />
         </div>
         <canvas style={{ display: 'none' }} />
@@ -245,6 +286,61 @@ const Page = () => {
           <Separator className="my-4" />
 
           <div className="space-y-2">
+            <Label>문자 색상 강제</Label>
+            {manualCharColors.map((item, idx) => (
+              <div key={idx} className="flex items-center gap-2">
+                <Input
+                  type="text"
+                  maxLength={1}
+                  value={item.char}
+                  onChange={(e) => handleCharChange(idx, e.target.value)}
+                  className="w-10 shrink-0 placeholder:text-gray-300"
+                  placeholder="#"
+                />
+                <input
+                  type="color"
+                  value={item.color}
+                  onChange={(e) => handleColorChange(idx, e.target.value)}
+                  className="h-10 w-10 shrink-0 border-black p-0"
+                />
+                <Input
+                  type="text"
+                  value={item.color}
+                  onChange={(e) => handleHexInputChange(idx, e.target.value)}
+                  className={cn('w-full')}
+                  maxLength={7}
+                  pattern="^#[0-9a-fA-F]{8}$"
+                  placeholder="#000000"
+                />
+
+                <div className="flex items-center">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={cn('h-8 w-8 rounded-full', {
+                      hidden: manualCharColors.length === 1,
+                    })}
+                    onClick={() => handleRemoveCharColor(idx)}
+                    aria-label="문자 색상 세트 삭제"
+                  >
+                    <Trash2 className="h-4 w-4 text-red-700" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={cn('h-8 w-8 rounded-full', {})}
+                    onClick={handleAddCharColor}
+                    aria-label="문자 색상 세트 추가"
+                  >
+                    <PlusCircle className="h-4 w-4 text-blue-700" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+          <Separator className="my-4" />
+
+          <div className="space-y-2">
             <Label>문자 랜덤 레벨</Label>
             <Tabs
               value={charsRandomLevel}
@@ -255,13 +351,13 @@ const Page = () => {
             >
               <TabsList className="flex w-full justify-between">
                 <TabsTrigger value="none" className="flex-1">
-                  none
+                  없음
                 </TabsTrigger>
                 <TabsTrigger value="group" className="flex-1">
-                  group
+                  그룹
                 </TabsTrigger>
                 <TabsTrigger value="all" className="flex-1">
-                  all
+                  전체
                 </TabsTrigger>
               </TabsList>
             </Tabs>
@@ -277,10 +373,10 @@ const Page = () => {
             >
               <TabsList className="flex w-full justify-between">
                 <TabsTrigger value="original" className="flex-1">
-                  Original
+                  원본
                 </TabsTrigger>
                 <TabsTrigger value="invert" className="flex-1">
-                  Invert
+                  반전
                 </TabsTrigger>
               </TabsList>
             </Tabs>
