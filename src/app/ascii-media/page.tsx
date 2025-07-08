@@ -32,7 +32,8 @@ const Page = () => {
   >('none');
   const [isRecording, setIsRecording] = useState(false);
   const recorderRef = useRef<MediaRecorder | null>(null);
-  const [backgroundColor, setBackgroundColor] = useState('#ffffff');
+  const [backgroundColor, setBackgroundColor] =
+    useState<`#${string}`>('#ffffff');
   const [recordTime, setRecordTime] = useState(5); // seconds
   const [recordFormat, setRecordFormat] = useState<'webm' | 'mp4'>('webm');
   const [quality, setQuality] = useState(10_000_000); // bps, default 10Mbps
@@ -96,6 +97,7 @@ const Page = () => {
             charInterval={charInterval}
             color={color}
             charsRandomLevel={charsRandomLevel}
+            backgroundColor={backgroundColor}
           />
         </div>
         <canvas style={{ display: 'none' }} />
@@ -247,13 +249,17 @@ const Page = () => {
                 id="background-color-picker"
                 type="color"
                 value={backgroundColor}
-                onChange={(e) => setBackgroundColor(e.target.value)}
+                onChange={(e) =>
+                  setBackgroundColor(e.target.value as `#${string}`)
+                }
                 className="h-10 w-10 border-none p-0"
               />
               <Input
                 type="text"
                 value={backgroundColor}
-                onChange={(e) => setBackgroundColor(e.target.value)}
+                onChange={(e) =>
+                  setBackgroundColor(e.target.value as `#${string}`)
+                }
                 className="w-24"
                 maxLength={7}
               />
