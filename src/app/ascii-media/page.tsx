@@ -1,7 +1,7 @@
 'use client';
 
 import { AsciiMedia } from 'ascii-react';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
   Input,
   Button,
@@ -16,11 +16,13 @@ import {
   SelectItem,
   SelectValue,
 } from '@/components/ui';
+import DndFileInput from './components/DndFileInput';
 
 const video1 = 'https://assets.codepen.io/907471/mouse.mp4';
 
 const Page = () => {
   const [src, setSrc] = useState(video1);
+  const [fileUrl, setFileUrl] = useState<string | null>(null);
 
   const [mediaType, setMediaType] = useState<'video' | 'image'>('video');
   const [resolution, setResolution] = useState(96);
@@ -39,6 +41,13 @@ const Page = () => {
   const [quality, setQuality] = useState(10_000_000); // bps, default 10Mbps
   const [ignoreBright, setIgnoreBright] = useState(0); // 0~1
   const [invert, setInvert] = useState(false);
+
+  // Clean up Blob URL on unmount or when new file is selected
+  useEffect(() => {
+    return () => {
+      if (fileUrl) URL.revokeObjectURL(fileUrl);
+    };
+  }, [fileUrl]);
 
   const handleRecord = () => {
     const canvas = document.querySelector('canvas');
@@ -115,6 +124,19 @@ const Page = () => {
           Ascii Media 설정
         </div>
         <div className="flex-1 overflow-y-auto px-6 py-4">
+          <div className="space-y-2">
+            <Label>파일 업로드</Label>
+            <DndFileInput
+              onFile={(file) => {
+                if (fileUrl) URL.revokeObjectURL(fileUrl);
+                const url = URL.createObjectURL(file);
+                setFileUrl(url);
+                setSrc(url);
+              }}
+              accept="image/*,video/*"
+            />
+          </div>
+          <Separator className="my-4" />
           <div className="space-y-2">
             <Label htmlFor="media-url">미디어 URL</Label>
             <Input
