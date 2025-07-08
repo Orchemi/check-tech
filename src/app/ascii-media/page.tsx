@@ -20,9 +20,11 @@ import AsciiIgnoreBrightSection from './_components/sidebar/AsciiIgnoreBrightSec
 import AsciiRecordSection from './_components/sidebar/AsciiRecordSection';
 import AsciiRecordButtonSection from './_components/sidebar/AsciiRecordButtonSection';
 import AsciiColorSection from './_components/sidebar/AsciiColorSection';
+import AsciiColorTransitionSection from './_components/sidebar/AsciiColorTransitionSection';
 import useManualCharColor from './_hooks/useManualCharColor';
 import useAsciiRecord from './_hooks/useAsciiRecord';
 import useAsciiFileRevokeObjectURL from './_hooks/useAsciiFileRevokeObjectURL';
+import useAsciiColorTransition from './_hooks/useAsciiColorTransition';
 import { MediaType, AsciiColor } from 'ascii-react';
 
 const video1 = 'https://assets.codepen.io/907471/mouse.mp4';
@@ -49,10 +51,12 @@ const Page = () => {
   const [manualCharColors, setManualCharColors] = useState<ManualCharColor[]>([
     { char: '', color: '#000000' },
   ]);
+  const [startColor, setStartColor] = useState('#000000');
+  const [endColor, setEndColor] = useState('#ffffff');
+  const [gradientDuration, setGradientDuration] = useState(5);
 
   useAsciiFileRevokeObjectURL({ fileUrl });
   const { handleRecord } = useAsciiRecord({
-    fileUrl,
     setIsRecording,
     recorderRef,
     recordTime,
@@ -67,6 +71,13 @@ const Page = () => {
     handleAddCharColor,
     handleRemoveCharColor,
   } = useManualCharColor({ setManualCharColors });
+
+  const { startGradient } = useAsciiColorTransition({
+    startColor,
+    endColor,
+    duration: gradientDuration,
+    onUpdate: (c) => setColor(c as HexColor),
+  });
 
   return (
     <div className="relative flex min-h-screen">
@@ -121,6 +132,16 @@ const Page = () => {
           <Separator className="my-4" />
 
           <AsciiColorSection color={color} setColor={setColor} />
+          <Separator className="my-4" />
+          <AsciiColorTransitionSection
+            startColor={startColor}
+            setStartColor={setStartColor}
+            endColor={endColor}
+            setEndColor={setEndColor}
+            duration={gradientDuration}
+            setDuration={setGradientDuration}
+            onStart={startGradient}
+          />
           <Separator className="my-4" />
 
           <AsciiManualCharColorSection

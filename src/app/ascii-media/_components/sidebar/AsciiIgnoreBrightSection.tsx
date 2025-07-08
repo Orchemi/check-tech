@@ -13,7 +13,7 @@ const AsciiIgnoreBrightSection = ({
   return (
     <div className="space-y-2">
       <Label htmlFor="ignore-bright-slider" className="mb-3 block">
-        밝은 부분 무시: {(ignoreBright * 100).toFixed(0)}%
+        영역 무시: {(ignoreBright * 100).toFixed(0)}%
       </Label>
       <Slider
         min={0}
