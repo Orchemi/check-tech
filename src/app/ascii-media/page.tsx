@@ -5,12 +5,16 @@ import { useState, useRef } from 'react';
 import {
   Input,
   Button,
-  Slider,
   Label,
   Separator,
   Tabs,
   TabsList,
   TabsTrigger,
+  Select,
+  SelectTrigger,
+  SelectContent,
+  SelectItem,
+  SelectValue,
 } from '@/components/ui';
 
 const video1 = 'https://assets.codepen.io/907471/mouse.mp4';
@@ -31,6 +35,7 @@ const Page = () => {
   const [backgroundColor, setBackgroundColor] = useState('#ffffff');
   const [recordTime, setRecordTime] = useState(5); // seconds
   const [recordFormat, setRecordFormat] = useState<'webm' | 'mp4'>('webm');
+  const [quality, setQuality] = useState(10_000_000); // bps, default 10Mbps
 
   const handleRecord = () => {
     const canvas = document.querySelector('canvas');
@@ -51,9 +56,10 @@ const Page = () => {
       );
       return;
     }
+    let videoBitsPerSecond = quality;
     const recorder = new MediaRecorder(stream, {
       mimeType,
-      videoBitsPerSecond: 10_000_000,
+      videoBitsPerSecond,
     });
     const chunks: Blob[] = [];
 
@@ -138,36 +144,42 @@ const Page = () => {
               <Label htmlFor="resolution-slider" className="mb-2 block">
                 해상도: {resolution}px
               </Label>
-              <Slider
+              <input
                 id="resolution-slider"
+                type="range"
                 min={24}
                 max={192}
-                value={[resolution]}
-                onValueChange={([v]) => setResolution(v)}
+                value={resolution}
+                onChange={(e) => setResolution(Number(e.target.value))}
+                className="w-full"
               />
             </div>
             <div>
               <Label htmlFor="font-size-slider" className="mb-2 block">
                 폰트 크기: {fontSize}px
               </Label>
-              <Slider
+              <input
                 id="font-size-slider"
+                type="range"
                 min={4}
                 max={24}
-                value={[fontSize]}
-                onValueChange={([v]) => setFontSize(v)}
+                value={fontSize}
+                onChange={(e) => setFontSize(Number(e.target.value))}
+                className="w-full"
               />
             </div>
             <div>
               <Label htmlFor="interval-slider" className="mb-2 block">
                 간격: {charInterval}ms
               </Label>
-              <Slider
+              <input
                 id="interval-slider"
+                type="range"
                 min={16}
                 max={500}
-                value={[charInterval]}
-                onValueChange={([v]) => setCharInterval(v)}
+                value={charInterval}
+                onChange={(e) => setCharInterval(Number(e.target.value))}
+                className="w-full"
               />
             </div>
           </div>
@@ -253,14 +265,37 @@ const Page = () => {
             <Label htmlFor="record-time-slider" className="mb-2 block">
               녹화 시간: {recordTime}초
             </Label>
-            <Slider
+            <input
               id="record-time-slider"
+              type="range"
               min={1}
               max={10}
               step={1}
-              value={[recordTime]}
-              onValueChange={([v]) => setRecordTime(v)}
+              value={recordTime}
+              onChange={(e) => setRecordTime(Number(e.target.value))}
+              className="w-full"
             />
+          </div>
+          <Separator className="my-4" />
+
+          <div className="space-y-2">
+            <Label htmlFor="quality-select">화질</Label>
+            <Select
+              value={quality.toString()}
+              onValueChange={(v) => setQuality(Number(v))}
+            >
+              <SelectTrigger id="quality-select" className="w-full">
+                <SelectValue placeholder="화질 선택" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="2000000">2 Mbps (초저화질)</SelectItem>
+                <SelectItem value="5000000">5 Mbps (저화질)</SelectItem>
+                <SelectItem value="10000000">10 Mbps (기본)</SelectItem>
+                <SelectItem value="30000000">30 Mbps (고화질)</SelectItem>
+                <SelectItem value="50000000">50 Mbps (초고화질)</SelectItem>
+                <SelectItem value="100000000">100 Mbps (최대)</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <Separator className="my-4" />
 
