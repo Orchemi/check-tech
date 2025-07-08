@@ -68,7 +68,7 @@ const Page = () => {
       );
       return;
     }
-    let videoBitsPerSecond = quality;
+    const videoBitsPerSecond = quality;
     const recorder = new MediaRecorder(stream, {
       mimeType,
       videoBitsPerSecond,
