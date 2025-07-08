@@ -29,6 +29,7 @@ const Page = () => {
   const [isRecording, setIsRecording] = useState(false);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const [backgroundColor, setBackgroundColor] = useState('#ffffff');
+  const [recordTime, setRecordTime] = useState(5); // seconds
 
   const handleRecord = () => {
     const canvas = document.querySelector('canvas');
@@ -60,10 +61,8 @@ const Page = () => {
 
     setTimeout(() => {
       recorder.stop();
-    }, RECORD_TIME); // 5초간 녹화
+    }, recordTime * 1000); // 사용자가 지정한 초만큼 녹화
   };
-
-  const RECORD_TIME = 5000;
 
   return (
     <div className="relative flex min-h-screen">
@@ -234,6 +233,21 @@ const Page = () => {
                 maxLength={7}
               />
             </div>
+          </div>
+          <Separator className="my-4" />
+
+          <div className="space-y-2">
+            <Label htmlFor="record-time-slider" className="mb-2 block">
+              녹화 시간: {recordTime}초
+            </Label>
+            <Slider
+              id="record-time-slider"
+              min={1}
+              max={10}
+              step={1}
+              value={[recordTime]}
+              onValueChange={([v]) => setRecordTime(v)}
+            />
           </div>
           <Separator className="my-4" />
 
