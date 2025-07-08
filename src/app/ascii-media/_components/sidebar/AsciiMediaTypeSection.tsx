@@ -1,8 +1,9 @@
 import { Label, Tabs, TabsList, TabsTrigger } from '@/components/ui';
+import { MediaType } from 'ascii-react';
 
 interface AsciiMediaTypeSectionProps {
-  mediaType: 'video' | 'image';
-  setMediaType: (v: 'video' | 'image') => void;
+  mediaType: MediaType;
+  setMediaType: (v: MediaType) => void;
 }
 
 const AsciiMediaTypeSection = ({
@@ -14,7 +15,7 @@ const AsciiMediaTypeSection = ({
       <Label>타입</Label>
       <Tabs
         value={mediaType}
-        onValueChange={(v) => setMediaType(v as typeof mediaType)}
+        onValueChange={(v) => setMediaType(v as MediaType)}
         className="w-full"
       >
         <TabsList className="flex w-full justify-between">

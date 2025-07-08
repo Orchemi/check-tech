@@ -1,7 +1,12 @@
 'use client';
 
-import { AsciiMedia, HexColor, ManualCharColor } from 'ascii-react';
-import { useState, useRef, useEffect } from 'react';
+import {
+  AsciiMedia,
+  CharsRandomLevel,
+  HexColor,
+  ManualCharColor,
+} from 'ascii-react';
+import { useState, useRef } from 'react';
 import { Separator } from '@/components/ui';
 import AsciiMediaTypeSection from './_components/sidebar/AsciiMediaTypeSection';
 import AsciiFileUploadSection from './_components/sidebar/AsciiFileUploadSection';
@@ -15,21 +20,24 @@ import AsciiIgnoreBrightSection from './_components/sidebar/AsciiIgnoreBrightSec
 import AsciiRecordSection from './_components/sidebar/AsciiRecordSection';
 import AsciiRecordButtonSection from './_components/sidebar/AsciiRecordButtonSection';
 import AsciiColorSection from './_components/sidebar/AsciiColorSection';
+import useManualCharColor from './_hooks/useManualCharColor';
+import useAsciiRecord from './_hooks/useAsciiRecord';
+import useAsciiFileRevokeObjectURL from './_hooks/useAsciiFileRevokeObjectURL';
+import { MediaType, AsciiColor } from 'ascii-react';
 
 const video1 = 'https://assets.codepen.io/907471/mouse.mp4';
 
 const Page = () => {
   const [src, setSrc] = useState(video1);
-  const [fileUrl, setFileUrl] = useState<string | null>(null);
+  const [fileUrl, setFileUrl] = useState<string>('');
 
-  const [mediaType, setMediaType] = useState<'video' | 'image'>('video');
+  const [mediaType, setMediaType] = useState<MediaType>('video');
   const [resolution, setResolution] = useState(96);
   const [fontSize, setFontSize] = useState(8);
   const [charInterval, setCharInterval] = useState(100);
-  const [color, setColor] = useState<'auto' | 'mono' | `#${string}`>('auto');
-  const [charsRandomLevel, setCharsRandomLevel] = useState<
-    'none' | 'group' | 'all'
-  >('none');
+  const [color, setColor] = useState<AsciiColor>('auto');
+  const [charsRandomLevel, setCharsRandomLevel] =
+    useState<CharsRandomLevel>('none');
   const [isRecording, setIsRecording] = useState(false);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const [backgroundColor, setBackgroundColor] = useState<HexColor>('#ffffff');
@@ -42,93 +50,23 @@ const Page = () => {
     { char: '', color: '#000000' },
   ]);
 
-  const handleCharChange = (idx: number, value: string) => {
-    setManualCharColors((arr) =>
-      arr.map((item, i) =>
-        i === idx ? { ...item, char: value.slice(0, 1) } : item,
-      ),
-    );
-  };
-  const handleColorChange = (idx: number, value: string) => {
-    setManualCharColors((arr) =>
-      arr.map((item, i) =>
-        i === idx ? { ...item, color: value as `#${string}` } : item,
-      ),
-    );
-  };
-  const handleAddCharColor = () => {
-    setManualCharColors((arr) => [...arr, { char: '', color: '#000000' }]);
-  };
-  const handleRemoveCharColor = (idx: number) => {
-    setManualCharColors((arr) =>
-      arr.length > 1 ? arr.filter((_, i) => i !== idx) : arr,
-    );
-  };
+  useAsciiFileRevokeObjectURL({ fileUrl });
+  const { handleRecord } = useAsciiRecord({
+    fileUrl,
+    setIsRecording,
+    recorderRef,
+    recordTime,
+    recordFormat,
+    quality,
+  });
 
-  // Hex input handler for manualCharColors
-  const handleHexInputChange = (idx: number, value: string) => {
-    // Only allow # and up to 8 hex digits
-    if (/^#[0-9a-fA-F]{0,8}$/.test(value)) {
-      setManualCharColors((arr) =>
-        arr.map((item, i) =>
-          i === idx ? { ...item, color: value as `#${string}` } : item,
-        ),
-      );
-    }
-  };
-
-  // Clean up Blob URL on unmount or when new file is selected
-  useEffect(() => {
-    return () => {
-      if (fileUrl) URL.revokeObjectURL(fileUrl);
-    };
-  }, [fileUrl]);
-
-  const handleRecord = () => {
-    const canvas = document.querySelector('canvas');
-    if (!canvas) {
-      alert('캔버스를 찾을 수 없습니다.');
-      return;
-    }
-    const stream = (canvas as HTMLCanvasElement).captureStream(30);
-    let mimeType = 'video/webm;codecs=vp9';
-    let fileExt = 'webm';
-    if (recordFormat === 'mp4') {
-      mimeType = 'video/mp4';
-      fileExt = 'mp4';
-    }
-    if (!MediaRecorder.isTypeSupported(mimeType)) {
-      alert(
-        `${recordFormat.toUpperCase()} 포맷은 이 브라우저에서 지원되지 않습니다.`,
-      );
-      return;
-    }
-    const videoBitsPerSecond = quality;
-    const recorder = new MediaRecorder(stream, {
-      mimeType,
-      videoBitsPerSecond,
-    });
-    const chunks: Blob[] = [];
-
-    recorder.ondataavailable = (e) => chunks.push(e.data);
-    recorder.onstop = () => {
-      const blob = new Blob(chunks, { type: mimeType });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `ascii-canvas.${fileExt}`;
-      a.click();
-      setIsRecording(false);
-    };
-
-    recorder.start();
-    setIsRecording(true);
-    recorderRef.current = recorder;
-
-    setTimeout(() => {
-      recorder.stop();
-    }, recordTime * 1000); // 사용자가 지정한 초만큼 녹화
-  };
+  const {
+    handleCharChange,
+    handleColorChange,
+    handleHexInputChange,
+    handleAddCharColor,
+    handleRemoveCharColor,
+  } = useManualCharColor({ setManualCharColors });
 
   return (
     <div className="relative flex min-h-screen">

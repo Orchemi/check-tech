@@ -2,7 +2,7 @@ import { Label, Input } from '@/components/ui';
 import { HexColor } from 'ascii-react';
 
 interface AsciiBackgroundSectionProps {
-  backgroundColor: string;
+  backgroundColor: HexColor;
   setBackgroundColor: (v: HexColor) => void;
 }
 

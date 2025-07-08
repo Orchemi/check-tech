@@ -2,8 +2,8 @@ import { Label } from '@/components/ui';
 import DndFileInput from '../DndFileInput';
 
 interface AsciiFileUploadSectionProps {
-  fileUrl: string | null;
-  setFileUrl: (v: string | null) => void;
+  fileUrl: string;
+  setFileUrl: (v: string) => void;
   setSrc: (v: string) => void;
 }
 

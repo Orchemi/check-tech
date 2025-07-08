@@ -1,8 +1,9 @@
 import { Label, Tabs, TabsList, TabsTrigger } from '@/components/ui';
+import { CharsRandomLevel } from 'ascii-react';
 
 interface AsciiCharsRandomLevelSectionProps {
-  charsRandomLevel: 'none' | 'group' | 'all';
-  setCharsRandomLevel: (v: 'none' | 'group' | 'all') => void;
+  charsRandomLevel: CharsRandomLevel;
+  setCharsRandomLevel: (v: CharsRandomLevel) => void;
 }
 
 const AsciiCharsRandomLevelSection = ({
@@ -14,9 +15,7 @@ const AsciiCharsRandomLevelSection = ({
       <Label>문자 랜덤 레벨</Label>
       <Tabs
         value={charsRandomLevel}
-        onValueChange={(v) =>
-          setCharsRandomLevel(v as 'none' | 'group' | 'all')
-        }
+        onValueChange={(v) => setCharsRandomLevel(v as CharsRandomLevel)}
         className="w-full"
       >
         <TabsList className="flex w-full justify-between">
