@@ -1,7 +1,6 @@
 import React from 'react';
 
 interface UseAsciiRecordArgs {
-  fileUrl: string;
   setIsRecording: (v: boolean) => void;
   recorderRef: React.RefObject<MediaRecorder | null>;
   recordTime: number;
@@ -9,7 +8,6 @@ interface UseAsciiRecordArgs {
   quality: number;
 }
 const useAsciiRecord = ({
-  fileUrl,
   setIsRecording,
   recorderRef,
   recordTime,

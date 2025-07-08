@@ -57,7 +57,6 @@ const Page = () => {
 
   useAsciiFileRevokeObjectURL({ fileUrl });
   const { handleRecord } = useAsciiRecord({
-    fileUrl,
     setIsRecording,
     recorderRef,
     recordTime,
@@ -73,13 +72,12 @@ const Page = () => {
     handleRemoveCharColor,
   } = useManualCharColor({ setManualCharColors });
 
-  const { startGradient, isRunning: isGradientRunning } =
-    useAsciiColorTransition({
-      startColor,
-      endColor,
-      duration: gradientDuration,
-      onUpdate: (c) => setColor(c as any),
-    });
+  const { startGradient } = useAsciiColorTransition({
+    startColor,
+    endColor,
+    duration: gradientDuration,
+    onUpdate: (c) => setColor(c as HexColor),
+  });
 
   return (
     <div className="relative flex min-h-screen">
