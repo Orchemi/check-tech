@@ -30,6 +30,7 @@ const Page = () => {
   const recorderRef = useRef<MediaRecorder | null>(null);
   const [backgroundColor, setBackgroundColor] = useState('#ffffff');
   const [recordTime, setRecordTime] = useState(5); // seconds
+  const [recordFormat, setRecordFormat] = useState<'webm' | 'mp4'>('webm');
 
   const handleRecord = () => {
     const canvas = document.querySelector('canvas');
@@ -38,19 +39,31 @@ const Page = () => {
       return;
     }
     const stream = (canvas as HTMLCanvasElement).captureStream(30);
+    let mimeType = 'video/webm;codecs=vp9';
+    let fileExt = 'webm';
+    if (recordFormat === 'mp4') {
+      mimeType = 'video/mp4';
+      fileExt = 'mp4';
+    }
+    if (!MediaRecorder.isTypeSupported(mimeType)) {
+      alert(
+        `${recordFormat.toUpperCase()} 포맷은 이 브라우저에서 지원되지 않습니다.`,
+      );
+      return;
+    }
     const recorder = new MediaRecorder(stream, {
-      mimeType: 'video/webm;codecs=vp9',
+      mimeType,
       videoBitsPerSecond: 10_000_000,
     });
     const chunks: Blob[] = [];
 
     recorder.ondataavailable = (e) => chunks.push(e.data);
     recorder.onstop = () => {
-      const blob = new Blob(chunks, { type: 'video/webm' });
+      const blob = new Blob(chunks, { type: mimeType });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'ascii-canvas.webm';
+      a.download = `ascii-canvas.${fileExt}`;
       a.click();
       setIsRecording(false);
     };
@@ -248,6 +261,25 @@ const Page = () => {
               value={[recordTime]}
               onValueChange={([v]) => setRecordTime(v)}
             />
+          </div>
+          <Separator className="my-4" />
+
+          <div className="space-y-2">
+            <Label>녹화 포맷</Label>
+            <Tabs
+              value={recordFormat}
+              onValueChange={(v) => setRecordFormat(v as 'webm' | 'mp4')}
+              className="w-full"
+            >
+              <TabsList className="flex w-full justify-between">
+                <TabsTrigger value="webm" className="flex-1">
+                  webm
+                </TabsTrigger>
+                <TabsTrigger value="mp4" className="flex-1">
+                  mp4
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
           </div>
           <Separator className="my-4" />
 
