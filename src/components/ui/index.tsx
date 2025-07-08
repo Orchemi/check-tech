@@ -6,3 +6,4 @@ export * from './select';
 export * from './slider';
 export * from './separator';
 export * from './tabs';
+export * from './switch';

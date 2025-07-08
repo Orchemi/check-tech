@@ -1,7 +1,7 @@
 'use client';
 
 import { AsciiMedia } from 'ascii-react';
-import { useState, useRef } from 'react';
+import { useState, useRef, useMemo } from 'react';
 import {
   Input,
   Button,
@@ -14,10 +14,13 @@ import {
   SelectTrigger,
   SelectContent,
   SelectItem,
+  Switch,
   SelectValue,
 } from '@/components/ui';
 
 const video1 = 'https://assets.codepen.io/907471/mouse.mp4';
+const image1 =
+  'https://exem-web-hub-static-file-bucket.s3.ap-northeast-2.amazonaws.com/tmp/test-image2.png';
 
 const Page = () => {
   const [src, setSrc] = useState(video1);
@@ -32,10 +35,18 @@ const Page = () => {
   >('none');
   const [isRecording, setIsRecording] = useState(false);
   const recorderRef = useRef<MediaRecorder | null>(null);
-  const [backgroundColor, setBackgroundColor] = useState('#ffffff');
+  const [backgroundColor, setBackgroundColor] =
+    useState<`#${string}`>('#ffffff');
   const [recordTime, setRecordTime] = useState(5); // seconds
   const [recordFormat, setRecordFormat] = useState<'webm' | 'mp4'>('webm');
   const [quality, setQuality] = useState(10_000_000); // bps, default 10Mbps
+  const [isTransparent, setIsTransparent] = useState(false);
+  const backgroundColorReal = useMemo(() => {
+    if (isTransparent) {
+      return '#00000000';
+    }
+    return backgroundColor;
+  }, [isTransparent, backgroundColor]);
 
   const handleRecord = () => {
     const canvas = document.querySelector('canvas');
@@ -96,6 +107,7 @@ const Page = () => {
             charInterval={charInterval}
             color={color}
             charsRandomLevel={charsRandomLevel}
+            backgroundColor={backgroundColorReal}
           />
         </div>
         <canvas style={{ display: 'none' }} />
@@ -241,21 +253,35 @@ const Page = () => {
           <Separator className="my-4" />
 
           <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <Label htmlFor="transparent-switch">배경 투명</Label>
+              <Switch
+                id="transparent-switch"
+                checked={isTransparent}
+                onCheckedChange={setIsTransparent}
+              />
+            </div>
             <Label htmlFor="background-color-picker">배경색</Label>
             <div className="flex items-center gap-2">
               <Input
                 id="background-color-picker"
                 type="color"
                 value={backgroundColor}
-                onChange={(e) => setBackgroundColor(e.target.value)}
+                onChange={(e) =>
+                  setBackgroundColor(e.target.value as `#${string}`)
+                }
                 className="h-10 w-10 border-none p-0"
+                disabled={isTransparent}
               />
               <Input
                 type="text"
                 value={backgroundColor}
-                onChange={(e) => setBackgroundColor(e.target.value)}
+                onChange={(e) =>
+                  setBackgroundColor(e.target.value as `#${string}`)
+                }
                 className="w-24"
                 maxLength={7}
+                disabled={isTransparent}
               />
             </div>
           </div>
