@@ -22,7 +22,7 @@ const AsciiColorTransitionSection = ({
 }: AsciiColorTransitionSectionProps) => {
   return (
     <div className="space-y-4">
-      <Label className="mb-1 block">전환 시작 색상</Label>
+      <Label className="mb-1 block">전환 시작점 색상</Label>
       <div className="flex items-center gap-2">
         <Input
           type="color"
@@ -37,7 +37,7 @@ const AsciiColorTransitionSection = ({
           className="w-full"
         />
       </div>
-      <Label className="mb-1 block">전환 끝 색상</Label>
+      <Label className="mb-1 block">전환 종료점 색상</Label>
       <div className="flex items-center gap-2">
         <Input
           type="color"
