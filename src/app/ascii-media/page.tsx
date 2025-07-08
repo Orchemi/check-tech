@@ -38,6 +38,7 @@ const Page = () => {
   const [recordFormat, setRecordFormat] = useState<'webm' | 'mp4'>('webm');
   const [quality, setQuality] = useState(10_000_000); // bps, default 10Mbps
   const [ignoreBright, setIgnoreBright] = useState(0); // 0~1
+  const [invert, setInvert] = useState(false);
 
   const handleRecord = () => {
     const canvas = document.querySelector('canvas');
@@ -100,6 +101,7 @@ const Page = () => {
             charsRandomLevel={charsRandomLevel}
             backgroundColor={backgroundColor}
             ignoreBright={ignoreBright}
+            invert={invert}
           />
         </div>
         <canvas style={{ display: 'none' }} />
@@ -238,6 +240,25 @@ const Page = () => {
                 </TabsTrigger>
                 <TabsTrigger value="all" className="flex-1">
                   all
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+          <Separator className="my-4" />
+
+          <div className="space-y-2">
+            <Label>명암 반전</Label>
+            <Tabs
+              value={invert ? 'invert' : 'original'}
+              onValueChange={(v) => setInvert(v === 'invert')}
+              className="w-full"
+            >
+              <TabsList className="flex w-full justify-between">
+                <TabsTrigger value="original" className="flex-1">
+                  Original
+                </TabsTrigger>
+                <TabsTrigger value="invert" className="flex-1">
+                  Invert
                 </TabsTrigger>
               </TabsList>
             </Tabs>
