@@ -10,6 +10,7 @@ import {
   SelectValue,
   Separator,
 } from '@/components/ui';
+import { Slider } from '@/components/ui/slider';
 
 interface AsciiRecordSectionProps {
   recordTime: number;
@@ -31,17 +32,15 @@ const AsciiRecordSection = ({
   return (
     <>
       <div className="space-y-2">
-        <Label htmlFor="record-time-slider" className="mb-2 block">
+        <Label htmlFor="record-time-slider" className="mb-3 block">
           녹화 시간: {recordTime}초
         </Label>
-        <input
-          id="record-time-slider"
-          type="range"
+        <Slider
           min={1}
           max={10}
           step={1}
-          value={recordTime}
-          onChange={(e) => setRecordTime(Number(e.target.value))}
+          value={[recordTime]}
+          onValueChange={([v]) => setRecordTime(v)}
           className="w-full"
         />
       </div>

@@ -1,4 +1,5 @@
 import { Label } from '@/components/ui';
+import { Slider } from '@/components/ui/slider';
 
 interface AsciiIgnoreBrightSectionProps {
   ignoreBright: number;
@@ -11,17 +12,15 @@ const AsciiIgnoreBrightSection = ({
 }: AsciiIgnoreBrightSectionProps) => {
   return (
     <div className="space-y-2">
-      <Label htmlFor="ignore-bright-slider" className="mb-2 block">
+      <Label htmlFor="ignore-bright-slider" className="mb-3 block">
         밝은 부분 무시: {(ignoreBright * 100).toFixed(0)}%
       </Label>
-      <input
-        id="ignore-bright-slider"
-        type="range"
+      <Slider
         min={0}
         max={100}
         step={1}
-        value={ignoreBright * 100}
-        onChange={(e) => setIgnoreBright(Number(e.target.value) / 100)}
+        value={[ignoreBright * 100]}
+        onValueChange={([v]) => setIgnoreBright(v / 100)}
         className="w-full"
       />
     </div>
