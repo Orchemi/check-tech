@@ -26,7 +26,7 @@ const AsciiResolutionSection = ({
         </Label>
         <Slider
           min={24}
-          max={192}
+          max={300}
           step={1}
           value={[resolution]}
           onValueChange={([v]) => setResolution(v)}
