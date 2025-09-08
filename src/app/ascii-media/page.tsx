@@ -21,6 +21,7 @@ import AsciiRecordSection from './_components/sidebar/AsciiRecordSection';
 import AsciiRecordButtonSection from './_components/sidebar/AsciiRecordButtonSection';
 import AsciiColorSection from './_components/sidebar/AsciiColorSection';
 import AsciiColorTransitionSection from './_components/sidebar/AsciiColorTransitionSection';
+import AsciiOpacitySection from './_components/sidebar/AsciiOpacitySection';
 import useManualCharColor from './_hooks/useManualCharColor';
 import useAsciiRecord from './_hooks/useAsciiRecord';
 import useAsciiFileRevokeObjectURL from './_hooks/useAsciiFileRevokeObjectURL';
@@ -48,6 +49,7 @@ const Page = () => {
   const [quality, setQuality] = useState(10_000_000); // bps, default 10Mbps
   const [ignoreBright, setIgnoreBright] = useState(0); // 0~1
   const [invert, setInvert] = useState(false);
+  const [opacity, setOpacity] = useState(0.5);
   const [manualCharColors, setManualCharColors] = useState<ManualCharColor[]>([
     { char: '', color: '#000000' },
   ]);
@@ -96,6 +98,7 @@ const Page = () => {
             ignoreBright={ignoreBright}
             invert={invert}
             manualCharColors={manualCharColors}
+            opacity={opacity}
           />
         </div>
         <canvas style={{ display: 'none' }} />
@@ -132,6 +135,7 @@ const Page = () => {
           <Separator className="my-4" />
 
           <AsciiColorSection color={color} setColor={setColor} />
+          <AsciiOpacitySection opacity={opacity} setOpacity={setOpacity} />
           <Separator className="my-4" />
           <AsciiColorTransitionSection
             startColor={startColor}

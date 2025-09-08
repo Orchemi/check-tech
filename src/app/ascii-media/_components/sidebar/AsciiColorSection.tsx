@@ -8,7 +8,7 @@ interface AsciiColorSectionProps {
 
 const AsciiColorSection = ({ color, setColor }: AsciiColorSectionProps) => {
   return (
-    <div className="space-y-2">
+    <div className="mb-4 space-y-2">
       <Label>색상</Label>
       <div className="flex items-center gap-2">
         <Button
