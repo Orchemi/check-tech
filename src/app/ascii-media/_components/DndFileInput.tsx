@@ -2,12 +2,16 @@ import React, { useRef, useState } from 'react';
 
 interface DndFileInputProps {
   onFile: (file: File) => void;
+  onFiles?: (files: File[]) => void;
   accept?: string;
+  multiple?: boolean;
 }
 
 const DndFileInput: React.FC<DndFileInputProps> = ({
   onFile,
+  onFiles,
   accept = 'image/*,video/*',
+  multiple = false,
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragOver, setIsDragOver] = useState(false);
@@ -16,13 +20,22 @@ const DndFileInput: React.FC<DndFileInputProps> = ({
     e.preventDefault();
     setIsDragOver(false);
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      onFile(e.dataTransfer.files[0]);
+      if (multiple && onFiles) {
+        onFiles(Array.from(e.dataTransfer.files));
+      } else {
+        onFile(e.dataTransfer.files[0]);
+      }
     }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      onFile(e.target.files[0]);
+      const files = Array.from(e.target.files);
+      if (multiple && onFiles) {
+        onFiles(files);
+      } else {
+        onFile(files[0]);
+      }
     }
   };
 
@@ -43,6 +56,7 @@ const DndFileInput: React.FC<DndFileInputProps> = ({
         ref={inputRef}
         type="file"
         accept={accept}
+        multiple={multiple}
         className="hidden"
         onChange={handleChange}
       />

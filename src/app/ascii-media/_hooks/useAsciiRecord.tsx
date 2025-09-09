@@ -1,4 +1,6 @@
-import React from 'react';
+import React, { useCallback, useState } from 'react';
+import { MediaType } from 'ascii-react';
+import JSZip from 'jszip';
 
 interface UseAsciiRecordArgs {
   setIsRecording: (v: boolean) => void;
@@ -6,6 +8,7 @@ interface UseAsciiRecordArgs {
   recordTime: number;
   recordFormat: 'webm' | 'mp4';
   quality: number;
+  mediaType: MediaType;
 }
 const useAsciiRecord = ({
   setIsRecording,
@@ -13,11 +16,31 @@ const useAsciiRecord = ({
   recordTime,
   recordFormat,
   quality,
+  mediaType,
 }: UseAsciiRecordArgs) => {
+  const [isBatching, setIsBatching] = useState(false);
+  const [batchProgress, setBatchProgress] = useState({ current: 0, total: 0 });
+
   const handleRecord = () => {
     const canvas = document.querySelector('canvas');
     if (!canvas) {
       alert('캔버스를 찾을 수 없습니다.');
+      return;
+    }
+    if (mediaType === 'image') {
+      const canvasEl = canvas as HTMLCanvasElement;
+      canvasEl.toBlob((blob) => {
+        if (!blob) {
+          alert('이미지 생성에 실패했습니다.');
+          return;
+        }
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `ascii-canvas.png`;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      }, 'image/png');
       return;
     }
     const stream = (canvas as HTMLCanvasElement).captureStream(30);
@@ -60,7 +83,75 @@ const useAsciiRecord = ({
     }, recordTime * 1000); // 사용자가 지정한 초만큼 녹화
   };
 
-  return { handleRecord };
+  const exportImageOnce = useCallback(async () => {
+    const canvas = document.querySelector('canvas') as HTMLCanvasElement | null;
+    if (!canvas) {
+      alert('캔버스를 찾을 수 없습니다.');
+      return null;
+    }
+    return new Promise<Blob | null>((resolve) => {
+      canvas.toBlob((blob) => resolve(blob), 'image/png');
+    });
+  }, []);
+
+  const handleBatchExport = useCallback(
+    async (
+      items: Array<{ url: string; name: string }>,
+      options?: { zip?: boolean },
+      controls?: { setSrc?: (url: string) => void; waitMs?: number },
+    ) => {
+      if (!items || items.length === 0) return;
+      if (mediaType !== 'image') return;
+
+      setIsBatching(true);
+      setBatchProgress({ current: 0, total: items.length });
+
+      const zip = options?.zip ? new JSZip() : null;
+      const downloads: { blob: Blob; name: string }[] = [];
+
+      for (let i = 0; i < items.length; i += 1) {
+        const item = items[i];
+        if (controls?.setSrc) {
+          controls.setSrc(item.url);
+        }
+        const waitMs = controls?.waitMs ?? 300;
+        await new Promise((resolve) => setTimeout(resolve, waitMs));
+
+        const blob = await exportImageOnce();
+        if (blob) {
+          const filename = item.name.replace(/\.[^.]+$/, '') + '.png';
+          if (zip) {
+            zip.file(filename, blob);
+          } else {
+            downloads.push({ blob, name: filename });
+          }
+        }
+        setBatchProgress({ current: i + 1, total: items.length });
+      }
+
+      if (zip) {
+        const content = await zip.generateAsync({ type: 'blob' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(content);
+        a.download = 'ascii-images.zip';
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+      } else {
+        downloads.forEach(({ blob, name }) => {
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = name;
+          a.click();
+          setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+        });
+      }
+
+      setIsBatching(false);
+    },
+    [exportImageOnce, mediaType],
+  );
+
+  return { handleRecord, handleBatchExport, isBatching, batchProgress };
 };
 
 export default useAsciiRecord;

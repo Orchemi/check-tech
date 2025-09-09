@@ -10,6 +10,7 @@ import {
   SelectValue,
   Separator,
 } from '@/components/ui';
+import { MediaType } from 'ascii-react';
 import { Slider } from '@/components/ui/slider';
 
 interface AsciiRecordSectionProps {
@@ -19,6 +20,7 @@ interface AsciiRecordSectionProps {
   setRecordFormat: (v: 'webm' | 'mp4') => void;
   quality: number;
   setQuality: (v: number) => void;
+  mediaType: MediaType;
 }
 
 const AsciiRecordSection = ({
@@ -28,7 +30,20 @@ const AsciiRecordSection = ({
   setRecordFormat,
   quality,
   setQuality,
+  mediaType,
 }: AsciiRecordSectionProps) => {
+  if (mediaType === 'image') {
+    return (
+      <>
+        <div className="space-y-2">
+          <Label>이미지 저장</Label>
+          <div className="text-sm text-gray-500">
+            현재 캔버스를 PNG로 저장합니다.
+          </div>
+        </div>
+      </>
+    );
+  }
   return (
     <>
       <div className="space-y-2">
