@@ -1,4 +1,5 @@
 import React from 'react';
+import { MediaType } from 'ascii-react';
 
 interface UseAsciiRecordArgs {
   setIsRecording: (v: boolean) => void;
@@ -6,6 +7,7 @@ interface UseAsciiRecordArgs {
   recordTime: number;
   recordFormat: 'webm' | 'mp4';
   quality: number;
+  mediaType: MediaType;
 }
 const useAsciiRecord = ({
   setIsRecording,
@@ -13,11 +15,28 @@ const useAsciiRecord = ({
   recordTime,
   recordFormat,
   quality,
+  mediaType,
 }: UseAsciiRecordArgs) => {
   const handleRecord = () => {
     const canvas = document.querySelector('canvas');
     if (!canvas) {
       alert('캔버스를 찾을 수 없습니다.');
+      return;
+    }
+    if (mediaType === 'image') {
+      const canvasEl = canvas as HTMLCanvasElement;
+      canvasEl.toBlob((blob) => {
+        if (!blob) {
+          alert('이미지 생성에 실패했습니다.');
+          return;
+        }
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `ascii-canvas.png`;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      }, 'image/png');
       return;
     }
     const stream = (canvas as HTMLCanvasElement).captureStream(30);

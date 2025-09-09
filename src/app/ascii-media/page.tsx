@@ -64,6 +64,7 @@ const Page = () => {
     recordTime,
     recordFormat,
     quality,
+    mediaType,
   });
 
   const {
@@ -182,11 +183,13 @@ const Page = () => {
             setRecordFormat={setRecordFormat}
             quality={quality}
             setQuality={setQuality}
+            mediaType={mediaType}
           />
           <Separator className="my-4" />
           <AsciiRecordButtonSection
             isRecording={isRecording}
             handleRecord={handleRecord}
+            mediaType={mediaType}
           />
         </div>
       </aside>
