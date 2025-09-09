@@ -5,12 +5,14 @@ interface AsciiRecordButtonSectionProps {
   isRecording: boolean;
   handleRecord: () => void;
   mediaType: MediaType;
+  imagesCount?: number;
 }
 
 const AsciiRecordButtonSection = ({
   isRecording,
   handleRecord,
   mediaType,
+  imagesCount = 0,
 }: AsciiRecordButtonSectionProps) => {
   return (
     <Button
@@ -19,7 +21,9 @@ const AsciiRecordButtonSection = ({
       disabled={mediaType === 'video' ? isRecording : false}
     >
       {mediaType === 'image'
-        ? '이미지 저장'
+        ? imagesCount > 1
+          ? '이미지 일괄 저장'
+          : '이미지 저장'
         : isRecording
           ? '녹화 중...'
           : '녹화 시작'}

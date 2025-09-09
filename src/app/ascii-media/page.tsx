@@ -33,6 +33,13 @@ const video1 = 'https://assets.codepen.io/907471/mouse.mp4';
 const Page = () => {
   const [src, setSrc] = useState(video1);
   const [fileUrl, setFileUrl] = useState<string>('');
+  const [imagesQueue, setImagesQueue] = useState<
+    {
+      file: File;
+      url: string;
+      name: string;
+    }[]
+  >([]);
 
   const [mediaType, setMediaType] = useState<MediaType>('video');
   const [resolution, setResolution] = useState(96);
@@ -58,14 +65,15 @@ const Page = () => {
   const [gradientDuration, setGradientDuration] = useState(5);
 
   useAsciiFileRevokeObjectURL({ fileUrl });
-  const { handleRecord } = useAsciiRecord({
-    setIsRecording,
-    recorderRef,
-    recordTime,
-    recordFormat,
-    quality,
-    mediaType,
-  });
+  const { handleRecord, handleBatchExport, isBatching, batchProgress } =
+    useAsciiRecord({
+      setIsRecording,
+      recorderRef,
+      recordTime,
+      recordFormat,
+      quality,
+      mediaType,
+    });
 
   const {
     handleCharChange,
@@ -112,9 +120,12 @@ const Page = () => {
         <div className="border-b px-6 py-3 text-lg font-bold">설정</div>
         <div className="flex-1 overflow-y-auto px-6 py-4">
           <AsciiFileUploadSection
+            mediaType={mediaType}
             fileUrl={fileUrl}
             setFileUrl={setFileUrl}
             setSrc={setSrc}
+            imagesQueue={imagesQueue}
+            setImagesQueue={setImagesQueue}
           />
           <Separator className="my-4" />
           <AsciiMediaUrlSection src={src} setSrc={setSrc} />
@@ -188,11 +199,34 @@ const Page = () => {
           <Separator className="my-4" />
           <AsciiRecordButtonSection
             isRecording={isRecording}
-            handleRecord={handleRecord}
+            handleRecord={() => {
+              if (mediaType === 'image' && imagesQueue.length > 0) {
+                const shouldZip = imagesQueue.length > 1;
+                handleBatchExport(
+                  imagesQueue.map((i) => ({ url: i.url, name: i.name })),
+                  { zip: shouldZip },
+                  { setSrc, waitMs: 400 },
+                );
+              } else {
+                handleRecord();
+              }
+            }}
             mediaType={mediaType}
+            imagesCount={imagesQueue.length}
           />
         </div>
       </aside>
+
+      {isBatching ? (
+        <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/50">
+          <div className="rounded-md bg-white p-6 shadow-lg">
+            <div className="mb-2 text-lg font-semibold">이미지 변환 중...</div>
+            <div className="text-sm text-gray-600">
+              {batchProgress.current} / {batchProgress.total}
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 };
