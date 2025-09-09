@@ -69,15 +69,20 @@ const Page = () => {
   const [gradientDuration, setGradientDuration] = useState(5);
 
   useAsciiFileRevokeObjectURL({ fileUrl });
-  const { handleRecord, handleBatchExport, isBatching, batchProgress } =
-    useAsciiRecord({
-      setIsRecording,
-      recorderRef,
-      recordTime,
-      recordFormat,
-      quality,
-      mediaType,
-    });
+  const {
+    handleRecord,
+    handleBatchExport,
+    isBatching,
+    batchProgress,
+    cancelBatch,
+  } = useAsciiRecord({
+    setIsRecording,
+    recorderRef,
+    recordTime,
+    recordFormat,
+    quality,
+    mediaType,
+  });
 
   const {
     handleCharChange,
@@ -223,6 +228,7 @@ const Page = () => {
                   {
                     zip: imagesOutput === 'zip',
                     framesToVideo: imagesOutput === 'video',
+                    transcodeToMp4: imagesOutput === 'video',
                     videoIntervalSec: 1 / Math.max(videoFps, 0.1),
                   },
                   {
@@ -233,6 +239,8 @@ const Page = () => {
                       setMediaType(prevMediaType);
                       setSrc(prevSrc);
                     },
+                    setCharInterval: setCharInterval,
+                    originalCharInterval: charInterval,
                   },
                 );
               } else {
@@ -247,10 +255,35 @@ const Page = () => {
 
       {isBatching ? (
         <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/50">
-          <div className="rounded-md bg-white p-6 shadow-lg">
-            <div className="mb-2 text-lg font-semibold">변환 중...</div>
-            <div className="text-sm text-gray-600">
+          <div className="w-[420px] rounded-md bg-white p-6 shadow-lg">
+            <div className="mb-3 flex items-center justify-between">
+              <div className="text-lg font-semibold">작업 진행중</div>
+              <button
+                className="rounded-md px-3 py-1 text-sm text-gray-500 hover:bg-gray-100"
+                onClick={cancelBatch}
+              >
+                취소
+              </button>
+            </div>
+            <div className="mb-2 text-sm text-gray-600">
               {batchProgress.current} / {batchProgress.total}
+            </div>
+            <div className="relative h-2 w-full overflow-hidden rounded bg-gray-200">
+              <div
+                className="h-2 bg-blue-500 transition-[width] duration-200"
+                style={{
+                  width: `${
+                    batchProgress.total > 0
+                      ? Math.min(
+                          100,
+                          Math.round(
+                            (batchProgress.current / batchProgress.total) * 100,
+                          ),
+                        )
+                      : 0
+                  }%`,
+                }}
+              />
             </div>
           </div>
         </div>

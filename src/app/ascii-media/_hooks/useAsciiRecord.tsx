@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { MediaType } from 'ascii-react';
 import JSZip from 'jszip';
 
@@ -21,6 +21,8 @@ const useAsciiRecord = ({
 }: UseAsciiRecordArgs) => {
   const [isBatching, setIsBatching] = useState(false);
   const [batchProgress, setBatchProgress] = useState({ current: 0, total: 0 });
+  const abortRef = useRef(false);
+  const activeMediaRecorderRef = useRef<MediaRecorder | null>(null);
 
   const handleRecord = () => {
     const canvas = document.querySelector('canvas');
@@ -110,17 +112,21 @@ const useAsciiRecord = ({
         videoIntervalSec?: number;
         framesToVideo?: boolean;
         outputMime?: string;
+        transcodeToMp4?: boolean;
       },
       controls?: {
         setSrc?: (url: string) => void;
         setMediaType?: (t: MediaType) => void;
         restore?: () => void;
         waitMs?: number;
+        setCharInterval?: (v: number) => void;
+        originalCharInterval?: number;
       },
     ) => {
       if (!items || items.length === 0) return;
       if (mediaType !== 'image' && mediaType !== 'video') return;
 
+      abortRef.current = false;
       setIsBatching(true);
       setBatchProgress({ current: 0, total: items.length });
 
@@ -140,6 +146,7 @@ const useAsciiRecord = ({
             else downloads.push({ blob, name: filename });
           }
           setBatchProgress({ current: i + 1, total: items.length });
+          if (abortRef.current) break;
         }
       } else if (mediaType === 'video') {
         // items should have length 1 for video export: the video URL
@@ -177,29 +184,75 @@ const useAsciiRecord = ({
           return;
         }
 
-        const waitMs = controls?.waitMs ?? 300;
-        // Setup MediaRecorder on ASCII canvas stream if building a video
+        const waitMs = controls?.waitMs ?? Math.max(1000 / fps, 16);
+
+        // Choose ASCII canvas reference
+        const canvases = Array.from(
+          document.querySelectorAll('canvas'),
+        ) as HTMLCanvasElement[];
+        const visible = canvases.filter(
+          (c) =>
+            c.width > 0 &&
+            c.height > 0 &&
+            getComputedStyle(c).display !== 'none',
+        );
+        const asciiCanvas =
+          (visible.length > 0 ? visible : canvases).sort(
+            (a, b) => b.width * b.height - a.width * a.height,
+          )[0] || null;
+        if (!asciiCanvas) {
+          alert('캔버스를 찾을 수 없습니다.');
+          setIsBatching(false);
+          return;
+        }
+
+        // Paths:
+        // A) If transcodeToMp4=true → collect PNG frames from ASCII canvas; assemble with ffmpeg for exact duration
+        // B) Else → record live canvas stream with MediaRecorder (webm/mp4 if supported)
+        const collectPngs = !!options?.transcodeToMp4;
+        const framePngs: { blob: Blob; name: string }[] = [];
+
         let mediaRecorder: MediaRecorder | null = null;
         let recordedChunks: Blob[] = [];
-        if (buildVideo) {
-          const asciiCanvas = document.querySelector(
-            'canvas',
-          ) as HTMLCanvasElement | null;
-          if (!asciiCanvas) {
-            alert('캔버스를 찾을 수 없습니다.');
+        let recordCanvas: HTMLCanvasElement | null = null;
+        let recordCtx: CanvasRenderingContext2D | null = null;
+        if (buildVideo && !collectPngs) {
+          recordCanvas = document.createElement('canvas');
+          recordCanvas.width = asciiCanvas.width || video.videoWidth;
+          recordCanvas.height = asciiCanvas.height || video.videoHeight;
+          recordCtx = recordCanvas.getContext('2d');
+          if (!recordCtx) {
+            alert('캔버스 컨텍스트를 가져올 수 없습니다.');
             setIsBatching(false);
             return;
           }
-          const stream = asciiCanvas.captureStream(fps);
-          let mime = options?.outputMime ?? 'video/webm;codecs=vp9';
-          if (!MediaRecorder.isTypeSupported(mime)) mime = 'video/webm';
+          const stream = recordCanvas.captureStream(fps);
+          const mimeCandidates = [
+            'video/mp4;codecs=h264',
+            'video/mp4',
+            'video/webm;codecs=vp9',
+            'video/webm;codecs=vp8',
+            'video/webm',
+          ];
+          let mime = options?.outputMime || '';
+          if (!mime || !MediaRecorder.isTypeSupported(mime)) {
+            mime =
+              mimeCandidates.find((m) => MediaRecorder.isTypeSupported(m)) ||
+              'video/webm';
+          }
           mediaRecorder = new MediaRecorder(stream, { mimeType: mime });
           mediaRecorder.ondataavailable = (e) => {
             if (e.data && e.data.size > 0) recordedChunks.push(e.data);
           };
-          mediaRecorder.start();
+          const timeSliceMs = Math.max(1000 / fps, 100);
+          mediaRecorder.start(timeSliceMs);
+          activeMediaRecorderRef.current = mediaRecorder;
         }
+
         for (let i = 0; i < frames.length; i += 1) {
+          if (abortRef.current) {
+            break;
+          }
           const t = frames[i];
           video.currentTime = Math.min(t, duration);
           await new Promise((r) => {
@@ -216,9 +269,10 @@ const useAsciiRecord = ({
           if (controls?.setMediaType) controls.setMediaType('image');
           if (controls?.setSrc)
             controls.setSrc(offscreen.toDataURL('image/png'));
-          await new Promise((r) => setTimeout(r, waitMs));
+          await new Promise((r) => requestAnimationFrame(() => r(null)));
+          await new Promise((r) => requestAnimationFrame(() => r(null)));
+          await new Promise((r) => setTimeout(r, Math.max(0, waitMs - 2)));
 
-          // Capture the ASCII-rendered canvas
           if (!buildVideo) {
             const blob = await exportImageOnce();
             if (blob) {
@@ -226,26 +280,139 @@ const useAsciiRecord = ({
               if (zip) zip.file(filename, blob);
               else downloads.push({ blob, name: filename });
             }
+          } else if (collectPngs) {
+            const png = await exportImageOnce();
+            if (png)
+              framePngs.push({
+                blob: png,
+                name: `frame_${String(i + 1).padStart(4, '0')}.png`,
+              });
+          } else if (recordCtx && recordCanvas) {
+            recordCtx.clearRect(0, 0, recordCanvas.width, recordCanvas.height);
+            recordCtx.drawImage(
+              asciiCanvas,
+              0,
+              0,
+              recordCanvas.width,
+              recordCanvas.height,
+            );
           }
           setBatchProgress({ current: i + 1, total: frames.length });
         }
 
+        if (abortRef.current) {
+          try {
+            const mr = activeMediaRecorderRef.current;
+            if (mr && mr.state !== 'inactive') mr.stop();
+          } catch {}
+          activeMediaRecorderRef.current = null;
+          if (controls?.restore) controls.restore();
+          setIsBatching(false);
+          return;
+        }
+
         if (buildVideo && mediaRecorder) {
+          try {
+            mediaRecorder.requestData();
+          } catch {}
+          await new Promise((r) => setTimeout(r, 150));
           await new Promise<void>((resolve) => {
             mediaRecorder!.onstop = () => resolve();
             mediaRecorder!.stop();
           });
-          const outBlob = new Blob(recordedChunks, {
+          activeMediaRecorderRef.current = null;
+          if (recordedChunks.length === 0) {
+            alert(
+              '녹화된 비디오 데이터가 비어 있습니다. FPS를 조정해 다시 시도해주세요.',
+            );
+          }
+          let outBlob = new Blob(recordedChunks, {
             type: recordedChunks[0]?.type || 'video/webm',
           });
+          let filename = outBlob.type.includes('mp4')
+            ? 'ascii-video.mp4'
+            : 'ascii-video.webm';
+
           const a = document.createElement('a');
           a.href = URL.createObjectURL(outBlob);
-          a.download = 'ascii-video.webm';
+          a.download = filename;
           a.click();
           setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+        } else if (buildVideo && collectPngs) {
+          try {
+            const { FFmpeg } = await import('@ffmpeg/ffmpeg');
+            const { fetchFile, toBlobURL } = await import('@ffmpeg/util');
+            const ffmpeg = new FFmpeg();
+            const loadWithFallback = async () => {
+              const bases = [
+                'https://unpkg.com/@ffmpeg/core@0.12.10/dist/umd',
+                'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd',
+              ];
+              let lastErr: unknown = null;
+              for (const baseURL of bases) {
+                try {
+                  await ffmpeg.load({
+                    coreURL: await toBlobURL(
+                      `${baseURL}/ffmpeg-core.js`,
+                      'text/javascript',
+                    ),
+                    wasmURL: await toBlobURL(
+                      `${baseURL}/ffmpeg-core.wasm`,
+                      'application/wasm',
+                    ),
+                    workerURL: await toBlobURL(
+                      `${baseURL}/ffmpeg-core.worker.js`,
+                      'text/javascript',
+                    ),
+                  });
+                  return;
+                } catch (e) {
+                  console.warn(
+                    '[ascii-export] ffmpeg load failed for',
+                    baseURL,
+                    e,
+                  );
+                  lastErr = e;
+                }
+              }
+              throw lastErr ?? new Error('Failed to load ffmpeg core');
+            };
+            await loadWithFallback();
+            for (let i = 0; i < framePngs.length; i += 1) {
+              await ffmpeg.writeFile(
+                framePngs[i].name,
+                await fetchFile(framePngs[i].blob),
+              );
+            }
+            const fr = fps > 0 ? fps : 30;
+            await ffmpeg.exec([
+              '-framerate',
+              String(fr),
+              '-i',
+              'frame_%04d.png',
+              '-c:v',
+              'libx264',
+              '-pix_fmt',
+              'yuv420p',
+              '-movflags',
+              'faststart',
+              'output.mp4',
+            ]);
+            const data = (await ffmpeg.readFile('output.mp4')) as Uint8Array;
+            const outBlob = new Blob([data], { type: 'video/mp4' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(outBlob);
+            a.download = 'ascii-video.mp4';
+            a.click();
+            setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+          } catch (e) {
+            console.error('ffmpeg assemble failed', e);
+            alert(
+              '영상 조합 중 오류가 발생했습니다. 콘솔 로그를 확인해주세요.',
+            );
+          }
         }
 
-        // restore media type/src if provided
         if (controls?.restore) controls.restore();
       }
 
@@ -271,7 +438,21 @@ const useAsciiRecord = ({
     [exportImageOnce, mediaType],
   );
 
-  return { handleRecord, handleBatchExport, isBatching, batchProgress };
+  const cancelBatch = useCallback(() => {
+    abortRef.current = true;
+    try {
+      const r = activeMediaRecorderRef.current;
+      if (r && r.state !== 'inactive') r.stop();
+    } catch {}
+  }, []);
+
+  return {
+    handleRecord,
+    handleBatchExport,
+    isBatching,
+    batchProgress,
+    cancelBatch,
+  };
 };
 
 export default useAsciiRecord;
