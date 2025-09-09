@@ -57,6 +57,7 @@ const Page = () => {
   );
   const [quality, setQuality] = useState(10_000_000); // bps, default 10Mbps
   const [videoFps, setVideoFps] = useState(30); // frames per second for images export
+  const [imagesOutput, setImagesOutput] = useState<'zip' | 'video'>('zip');
   const [ignoreBright, setIgnoreBright] = useState(0); // 0~1
   const [invert, setInvert] = useState(false);
   const [opacity, setOpacity] = useState(0.5);
@@ -200,6 +201,8 @@ const Page = () => {
             mediaType={mediaType}
             videoFps={videoFps}
             setVideoFps={setVideoFps}
+            imagesOutput={imagesOutput}
+            setImagesOutput={setImagesOutput}
           />
           <Separator className="my-4" />
           <AsciiRecordButtonSection
@@ -217,7 +220,11 @@ const Page = () => {
                 const prevSrc = src;
                 handleBatchExport(
                   [{ url: src, name: 'video' }],
-                  { zip: true, videoIntervalSec: 1 / Math.max(videoFps, 0.1) },
+                  {
+                    zip: imagesOutput === 'zip',
+                    framesToVideo: imagesOutput === 'video',
+                    videoIntervalSec: 1 / Math.max(videoFps, 0.1),
+                  },
                   {
                     setSrc,
                     setMediaType,

@@ -24,6 +24,8 @@ interface AsciiRecordSectionProps {
   mediaType: MediaType;
   videoFps?: number;
   setVideoFps?: (v: number) => void;
+  imagesOutput?: 'zip' | 'video';
+  setImagesOutput?: (v: 'zip' | 'video') => void;
 }
 
 const AsciiRecordSection = ({
@@ -36,6 +38,8 @@ const AsciiRecordSection = ({
   mediaType,
   videoFps,
   setVideoFps,
+  imagesOutput,
+  setImagesOutput,
 }: AsciiRecordSectionProps) => {
   if (mediaType === 'image') {
     return (
@@ -107,6 +111,26 @@ const AsciiRecordSection = ({
       </div>
       {recordFormat === 'images' ? (
         <>
+          <Separator className="my-4" />
+          <div className="space-y-2">
+            <Label>이미지 출력</Label>
+            <Tabs
+              value={imagesOutput}
+              onValueChange={(v) =>
+                setImagesOutput && setImagesOutput(v as 'zip' | 'video')
+              }
+              className="w-full"
+            >
+              <TabsList className="flex w-full justify-between">
+                <TabsTrigger value="zip" className="flex-1">
+                  zip
+                </TabsTrigger>
+                <TabsTrigger value="video" className="flex-1">
+                  video
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
           <Separator className="my-4" />
           <div className="space-y-2">
             <Label htmlFor="fps-input" className="mb-3 block">

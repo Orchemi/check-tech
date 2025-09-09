@@ -105,7 +105,12 @@ const useAsciiRecord = ({
   const handleBatchExport = useCallback(
     async (
       items: Array<{ url: string; name: string }>,
-      options?: { zip?: boolean; videoIntervalSec?: number },
+      options?: {
+        zip?: boolean;
+        videoIntervalSec?: number;
+        framesToVideo?: boolean;
+        outputMime?: string;
+      },
       controls?: {
         setSrc?: (url: string) => void;
         setMediaType?: (t: MediaType) => void;
@@ -144,6 +149,8 @@ const useAsciiRecord = ({
           return;
         }
         const intervalSec = options?.videoIntervalSec ?? 0.5;
+        const buildVideo = options?.framesToVideo === true;
+        const fps = intervalSec > 0 ? Math.round(1 / intervalSec) : 30;
         // Create a hidden video to iterate frames
         const video = document.createElement('video');
         video.src = videoUrl;
@@ -171,6 +178,27 @@ const useAsciiRecord = ({
         }
 
         const waitMs = controls?.waitMs ?? 300;
+        // Setup MediaRecorder on ASCII canvas stream if building a video
+        let mediaRecorder: MediaRecorder | null = null;
+        let recordedChunks: Blob[] = [];
+        if (buildVideo) {
+          const asciiCanvas = document.querySelector(
+            'canvas',
+          ) as HTMLCanvasElement | null;
+          if (!asciiCanvas) {
+            alert('캔버스를 찾을 수 없습니다.');
+            setIsBatching(false);
+            return;
+          }
+          const stream = asciiCanvas.captureStream(fps);
+          let mime = options?.outputMime ?? 'video/webm;codecs=vp9';
+          if (!MediaRecorder.isTypeSupported(mime)) mime = 'video/webm';
+          mediaRecorder = new MediaRecorder(stream, { mimeType: mime });
+          mediaRecorder.ondataavailable = (e) => {
+            if (e.data && e.data.size > 0) recordedChunks.push(e.data);
+          };
+          mediaRecorder.start();
+        }
         for (let i = 0; i < frames.length; i += 1) {
           const t = frames[i];
           video.currentTime = Math.min(t, duration);
@@ -191,13 +219,30 @@ const useAsciiRecord = ({
           await new Promise((r) => setTimeout(r, waitMs));
 
           // Capture the ASCII-rendered canvas
-          const blob = await exportImageOnce();
-          if (blob) {
-            const filename = `frame_${String(i + 1).padStart(4, '0')}.png`;
-            if (zip) zip.file(filename, blob);
-            else downloads.push({ blob, name: filename });
+          if (!buildVideo) {
+            const blob = await exportImageOnce();
+            if (blob) {
+              const filename = `frame_${String(i + 1).padStart(4, '0')}.png`;
+              if (zip) zip.file(filename, blob);
+              else downloads.push({ blob, name: filename });
+            }
           }
           setBatchProgress({ current: i + 1, total: frames.length });
+        }
+
+        if (buildVideo && mediaRecorder) {
+          await new Promise<void>((resolve) => {
+            mediaRecorder!.onstop = () => resolve();
+            mediaRecorder!.stop();
+          });
+          const outBlob = new Blob(recordedChunks, {
+            type: recordedChunks[0]?.type || 'video/webm',
+          });
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(outBlob);
+          a.download = 'ascii-video.webm';
+          a.click();
+          setTimeout(() => URL.revokeObjectURL(a.href), 1000);
         }
 
         // restore media type/src if provided
