@@ -52,8 +52,11 @@ const Page = () => {
   const recorderRef = useRef<MediaRecorder | null>(null);
   const [backgroundColor, setBackgroundColor] = useState<HexColor>('#ffffff');
   const [recordTime, setRecordTime] = useState(5); // seconds
-  const [recordFormat, setRecordFormat] = useState<'webm' | 'mp4'>('webm');
+  const [recordFormat, setRecordFormat] = useState<'webm' | 'mp4' | 'images'>(
+    'webm',
+  );
   const [quality, setQuality] = useState(10_000_000); // bps, default 10Mbps
+  const [videoFps, setVideoFps] = useState(30); // frames per second for images export
   const [ignoreBright, setIgnoreBright] = useState(0); // 0~1
   const [invert, setInvert] = useState(false);
   const [opacity, setOpacity] = useState(0.5);
@@ -195,6 +198,8 @@ const Page = () => {
             quality={quality}
             setQuality={setQuality}
             mediaType={mediaType}
+            videoFps={videoFps}
+            setVideoFps={setVideoFps}
           />
           <Separator className="my-4" />
           <AsciiRecordButtonSection
@@ -206,6 +211,22 @@ const Page = () => {
                   imagesQueue.map((i) => ({ url: i.url, name: i.name })),
                   { zip: shouldZip },
                   { setSrc, waitMs: 400 },
+                );
+              } else if (mediaType === 'video' && recordFormat === 'images') {
+                const prevMediaType = mediaType;
+                const prevSrc = src;
+                handleBatchExport(
+                  [{ url: src, name: 'video' }],
+                  { zip: true, videoIntervalSec: 1 / Math.max(videoFps, 0.1) },
+                  {
+                    setSrc,
+                    setMediaType,
+                    waitMs: 300,
+                    restore: () => {
+                      setMediaType(prevMediaType);
+                      setSrc(prevSrc);
+                    },
+                  },
                 );
               } else {
                 handleRecord();
@@ -220,7 +241,7 @@ const Page = () => {
       {isBatching ? (
         <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/50">
           <div className="rounded-md bg-white p-6 shadow-lg">
-            <div className="mb-2 text-lg font-semibold">이미지 변환 중...</div>
+            <div className="mb-2 text-lg font-semibold">변환 중...</div>
             <div className="text-sm text-gray-600">
               {batchProgress.current} / {batchProgress.total}
             </div>
