@@ -52,8 +52,12 @@ const Page = () => {
   const recorderRef = useRef<MediaRecorder | null>(null);
   const [backgroundColor, setBackgroundColor] = useState<HexColor>('#ffffff');
   const [recordTime, setRecordTime] = useState(5); // seconds
-  const [recordFormat, setRecordFormat] = useState<'webm' | 'mp4'>('webm');
+  const [recordFormat, setRecordFormat] = useState<'webm' | 'mp4' | 'images'>(
+    'webm',
+  );
   const [quality, setQuality] = useState(10_000_000); // bps, default 10Mbps
+  const [videoFps, setVideoFps] = useState(30); // frames per second for images export
+  const [imagesOutput, setImagesOutput] = useState<'zip' | 'video'>('zip');
   const [ignoreBright, setIgnoreBright] = useState(0); // 0~1
   const [invert, setInvert] = useState(false);
   const [opacity, setOpacity] = useState(0.5);
@@ -65,15 +69,20 @@ const Page = () => {
   const [gradientDuration, setGradientDuration] = useState(5);
 
   useAsciiFileRevokeObjectURL({ fileUrl });
-  const { handleRecord, handleBatchExport, isBatching, batchProgress } =
-    useAsciiRecord({
-      setIsRecording,
-      recorderRef,
-      recordTime,
-      recordFormat,
-      quality,
-      mediaType,
-    });
+  const {
+    handleRecord,
+    handleBatchExport,
+    isBatching,
+    batchProgress,
+    cancelBatch,
+  } = useAsciiRecord({
+    setIsRecording,
+    recorderRef,
+    recordTime,
+    recordFormat,
+    quality,
+    mediaType,
+  });
 
   const {
     handleCharChange,
@@ -195,6 +204,10 @@ const Page = () => {
             quality={quality}
             setQuality={setQuality}
             mediaType={mediaType}
+            videoFps={videoFps}
+            setVideoFps={setVideoFps}
+            imagesOutput={imagesOutput}
+            setImagesOutput={setImagesOutput}
           />
           <Separator className="my-4" />
           <AsciiRecordButtonSection
@@ -206,6 +219,29 @@ const Page = () => {
                   imagesQueue.map((i) => ({ url: i.url, name: i.name })),
                   { zip: shouldZip },
                   { setSrc, waitMs: 400 },
+                );
+              } else if (mediaType === 'video' && recordFormat === 'images') {
+                const prevMediaType = mediaType;
+                const prevSrc = src;
+                handleBatchExport(
+                  [{ url: src, name: 'video' }],
+                  {
+                    zip: imagesOutput === 'zip',
+                    framesToVideo: imagesOutput === 'video',
+                    transcodeToMp4: imagesOutput === 'video',
+                    videoIntervalSec: 1 / Math.max(videoFps, 0.1),
+                  },
+                  {
+                    setSrc,
+                    setMediaType,
+                    waitMs: 300,
+                    restore: () => {
+                      setMediaType(prevMediaType);
+                      setSrc(prevSrc);
+                    },
+                    setCharInterval: setCharInterval,
+                    originalCharInterval: charInterval,
+                  },
                 );
               } else {
                 handleRecord();
@@ -219,10 +255,35 @@ const Page = () => {
 
       {isBatching ? (
         <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/50">
-          <div className="rounded-md bg-white p-6 shadow-lg">
-            <div className="mb-2 text-lg font-semibold">이미지 변환 중...</div>
-            <div className="text-sm text-gray-600">
+          <div className="w-[420px] rounded-md bg-white p-6 shadow-lg">
+            <div className="mb-3 flex items-center justify-between">
+              <div className="text-lg font-semibold">작업 진행중</div>
+              <button
+                className="rounded-md px-3 py-1 text-sm text-gray-500 hover:bg-gray-100"
+                onClick={cancelBatch}
+              >
+                취소
+              </button>
+            </div>
+            <div className="mb-2 text-sm text-gray-600">
               {batchProgress.current} / {batchProgress.total}
+            </div>
+            <div className="relative h-2 w-full overflow-hidden rounded bg-gray-200">
+              <div
+                className="h-2 bg-blue-500 transition-[width] duration-200"
+                style={{
+                  width: `${
+                    batchProgress.total > 0
+                      ? Math.min(
+                          100,
+                          Math.round(
+                            (batchProgress.current / batchProgress.total) * 100,
+                          ),
+                        )
+                      : 0
+                  }%`,
+                }}
+              />
             </div>
           </div>
         </div>
