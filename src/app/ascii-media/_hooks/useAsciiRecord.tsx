@@ -213,7 +213,7 @@ const useAsciiRecord = ({
         const framePngs: { blob: Blob; name: string }[] = [];
 
         let mediaRecorder: MediaRecorder | null = null;
-        let recordedChunks: Blob[] = [];
+        const recordedChunks: Blob[] = [];
         let recordCanvas: HTMLCanvasElement | null = null;
         let recordCtx: CanvasRenderingContext2D | null = null;
         if (buildVideo && !collectPngs) {
@@ -326,10 +326,10 @@ const useAsciiRecord = ({
               '녹화된 비디오 데이터가 비어 있습니다. FPS를 조정해 다시 시도해주세요.',
             );
           }
-          let outBlob = new Blob(recordedChunks, {
+          const outBlob = new Blob(recordedChunks, {
             type: recordedChunks[0]?.type || 'video/webm',
           });
-          let filename = outBlob.type.includes('mp4')
+          const filename = outBlob.type.includes('mp4')
             ? 'ascii-video.mp4'
             : 'ascii-video.webm';
 
