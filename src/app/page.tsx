@@ -8,6 +8,12 @@ export default function Home() {
         <li>
           <Link href="/ascii-media">AsciiMedia</Link>
         </li>
+        <li>
+          <Link href="/color-random">Color Random</Link>
+        </li>
+        <li>
+          <Link href="/score-manager">Score Manager</Link>
+        </li>
       </ul>
     </div>
   );
